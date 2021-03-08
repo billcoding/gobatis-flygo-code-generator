@@ -39,21 +39,21 @@ func (ctl *{{.Controller.Name}}) GETS() func(ctx *Context) {
 	}
 }
 
-// GETS return routed POST handler
+// POST return routed POST handler
 func (ctl *{{.Controller.Name}}) POST() func(ctx *Context) {
 	return func(c *Context) {
         c.Text("POST")
 	}
 }
 
-// GETS return routed PUT handler
+// PUT return routed PUT handler
 func (ctl *{{.Controller.Name}}) PUT() func(ctx *Context) {
 	return func(c *Context) {
         c.Text("PUT")
 	}
 }
 
-// GETS return routed DELETE handler
+// DELETE return routed DELETE handler
 func (ctl *{{.Controller.Name}}) DELETE() func(ctx *Context) {
 	return func(c *Context) {
         c.Text("DELETE")
