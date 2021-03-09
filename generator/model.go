@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -58,11 +59,21 @@ func (eg *ModelGenerator) Init() *ModelGenerator {
 			field.HaveDefault = true
 			field.Default = column.Default
 			switch {
+			case strings.HasPrefix(field.Type, "uint") ||
+				strings.HasPrefix(field.Type, "int") ||
+				strings.HasPrefix(field.Type, "float"):
+				fv, err := strconv.ParseFloat(field.Default, 64)
+				if err == nil && fv == 0 {
+					field.IgnoreDefault = true
+				}
 			case field.Default == "CURRENT_TIMESTAMP" && field.Type == "string":
 				field.Default = `time.Now().Format("2006-01-02 15:04:05")`
 				eg.Model.ImportTime = true
 			case field.Type == "string":
 				field.Default = fmt.Sprintf("\"%s\"", field.Default)
+				if field.Default == "\"\"" {
+					field.IgnoreDefault = true
+				}
 			}
 		}
 		if eg.C.Model.FieldIdUpper {
@@ -81,7 +92,9 @@ func (eg *ModelGenerator) Init() *ModelGenerator {
 
 	for _, field := range eg.Model.Fields {
 		if field.HaveDefault {
-			eg.Model.DefaultFields = append(eg.Model.DefaultFields, field)
+			if !field.IgnoreDefault {
+				eg.Model.DefaultFields = append(eg.Model.DefaultFields, field)
+			}
 		} else {
 			eg.Model.NoDefaultFields = append(eg.Model.NoDefaultFields, field)
 		}

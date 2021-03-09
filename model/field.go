@@ -11,5 +11,6 @@ type Field struct {
 	JSONTagName      string
 	Column           *Column
 	HaveDefault      bool
+	IgnoreDefault    bool
 	Default          string
 }
