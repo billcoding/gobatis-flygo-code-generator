@@ -24,6 +24,7 @@ func (mg *MapperGenerator) Init(e *Model) {
 	mg.Mapper = &Mapper{
 		PKG:   mg.C.Mapper.PKG,
 		Model: e,
+		Batis: mg.C.Mapper.Batis,
 	}
 	mg.Mapper.Name = mg.C.Mapper.NamePrefix + ConvertString(mg.Mapper.Model.Table.Name, mg.C.Mapper.NameStrategy) + mg.C.Mapper.NameSuffix
 	mg.Mapper.VarName = mg.C.Mapper.VarNamePrefix + ConvertString(mg.Mapper.Model.Table.Name, mg.C.Mapper.VarNameStrategy) + mg.C.Mapper.VarNameSuffix

@@ -48,6 +48,7 @@ type MapperConfiguration struct {
 	VarNamePrefix    string
 	VarNameSuffix    string
 	Comment          bool
+	Batis            string
 }
 
 type CfgConfiguration struct {

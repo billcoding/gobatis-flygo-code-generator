@@ -14,25 +14,25 @@ import (
 
 var {{.Mapper.VarName}} = &{{.Mapper.Name}}{
 	insertMapper: func() *UpdateMapper {
-		return NewHelperWithBatis(c.Batis, "{{.Mapper.Model.Name}}", "Insert").Update()
+		return NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "Insert").Update()
 	},
 	deleteByIDMapper: func() *UpdateMapper {
-		return NewHelperWithBatis(c.Batis, "{{.Mapper.Model.Name}}", "DeleteByID").Update()
+		return NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "DeleteByID").Update()
 	},
 	updateByIDMapper: func() *UpdateMapper {
-		return NewHelperWithBatis(c.Batis, "{{.Mapper.Model.Name}}", "UpdateByID").Update()
+		return NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "UpdateByID").Update()
 	},
 	selectByIDMapper: func() *SelectMapper {
-		return NewHelperWithBatis(c.Batis, "{{.Mapper.Model.Name}}", "SelectByID").Select()
+		return NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectByID").Select()
 	},
 	selectByModelMapper: func() *SelectMapper {
-		return NewHelperWithBatis(c.Batis, "{{.Mapper.Model.Name}}", "SelectByModel").Select()
+		return NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectByModel").Select()
 	},
 	selectPageByModelMapper: func() *SelectMapper {
-		return NewHelperWithBatis(c.Batis, "{{.Mapper.Model.Name}}", "SelectPageByModel").Select()
+		return NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectPageByModel").Select()
 	},
 	selectPageMapByModelMapper: func() *SelectMapper {
-		return NewHelperWithBatis(c.Batis, "{{.Mapper.Model.Name}}", "SelectPageMapByModel").Select()
+		return NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectPageMapByModel").Select()
 	},
 }
 
@@ -161,7 +161,7 @@ func (m *{{.Mapper.Name}}) generateWhereSQL(model *{{.Mapper.Model.Name}}) (stri
 }
 
 func init() {
-    c.Batis.AddRaw({{.Mapper.Name}}XML)
+    c.{{.Mapper.Batis}}.AddRaw({{.Mapper.Name}}XML)
 }
 
 var {{.Mapper.Name}}XML = `

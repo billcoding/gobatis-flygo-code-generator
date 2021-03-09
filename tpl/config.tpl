@@ -10,8 +10,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var Batis = ba.Default()
+var {{.Config.Mapper.Batis}} = ba.Default()
 
 func init() {
-	Batis.DSN("DSN")
+	{{.Config.Mapper.Batis}}.DSN("DSN")
 }

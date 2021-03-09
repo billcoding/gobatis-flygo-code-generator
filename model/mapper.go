@@ -5,5 +5,6 @@ type Mapper struct {
 	Name     string
 	VarName  string
 	FileName string
+	Batis    string
 	Model    *Model
 }

@@ -40,6 +40,7 @@ var (
 	mapperVarNamePrefix    = flag.String("mavnp", "", "The Mapper var name prefix")
 	mapperVarNameSuffix    = flag.String("mavns", "Mapper", "The Mapper var name suffix")
 	mapperComment          = flag.Bool("mac", true, "The Mapper comment?")
+	mapperBatis            = flag.String("mab", "Batis", "The Mapper Batis name")
 
 	config        = flag.Bool("cf", false, "The Config enable?")
 	configPKG     = flag.String("cfp", "config", "The Config PKG")
@@ -111,6 +112,7 @@ var CFG = &Configuration{
 		VarNamePrefix:    "",
 		VarNameSuffix:    "Mapper",
 		Comment:          true,
+		Batis:            "Batis",
 	},
 	Config: &CfgConfiguration{
 		PKG:     "config",
@@ -209,6 +211,7 @@ func setCFG() {
 		CFG.Mapper.VarNamePrefix = *mapperVarNamePrefix
 		CFG.Mapper.VarNameSuffix = *mapperVarNameSuffix
 		CFG.Mapper.Comment = *mapperComment
+		CFG.Mapper.Batis = *mapperBatis
 		s5, have5 := strategyTypeMap[*mapperFileNameStrategy]
 		if have5 {
 			CFG.Mapper.FileNameStrategy = s5
