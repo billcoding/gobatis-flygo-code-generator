@@ -1,4 +1,4 @@
-github.com/billcoding/gobatis v0.0.0-20210123144648-b5c1676166f8 h1:eFhaVANaGXqlE6+8BHlMlX5R4bdX1HeIe8hrTUqxESE=
-github.com/billcoding/gobatis v0.0.0-20210123144648-b5c1676166f8/go.mod h1:x9DFHBYb4OQC8C8LWSBUVnjK97Kval4+eGB+K6DDb9I=
+github.com/billcoding/gobatis v0.0.0-20210308054652-f3de1c3ce4a8 h1:4nFfta5YMzXwLrL59F4HTq20f73w4AWAQy9+XEB4AGE=
+github.com/billcoding/gobatis v0.0.0-20210308054652-f3de1c3ce4a8/go.mod h1:YwX4qo3jibc4ajGYkIxwcO/8yZELacbMQ3BjsZdfYnA=
 github.com/go-sql-driver/mysql v1.5.0 h1:ozyZYNQW3x3HtqT1jira07DN2PArx2v7/mN66gGcHOs=
 github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
