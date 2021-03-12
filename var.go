@@ -42,9 +42,8 @@ var (
 	mapperComment          = flag.Bool("mac", true, "The Mapper comment?")
 	mapperBatis            = flag.String("mab", "Batis", "The Mapper Batis name")
 
-	config        = flag.Bool("cf", false, "The Config enable?")
-	configPKG     = flag.String("cfp", "config", "The Config PKG")
-	configComment = flag.Bool("cfc", true, "The Config comment?")
+	config    = flag.Bool("cf", false, "The Config enable?")
+	configPKG = flag.String("cfp", "config", "The Config PKG")
 
 	controller                 = flag.Bool("c", false, "The Controller enable?")
 	controllerPKG              = flag.String("cp", "controller", "The Controller PKG")
@@ -115,9 +114,12 @@ var CFG = &Configuration{
 		Batis:            "Batis",
 	},
 	Config: &CfgConfiguration{
-		PKG:     "config",
-		Name:    "config",
-		Comment: true,
+		PKG:  "config",
+		Name: "config",
+	},
+	Predicate: &PredicateConfiguration{
+		PKG:  "predicate",
+		Name: "predicate",
 	},
 	Controller: &ControllerConfiguration{
 		PKG:              "controller",
@@ -230,7 +232,6 @@ func setCFG() {
 		if *configPKG != "" {
 			CFG.Config.PKG = *configPKG
 		}
-		CFG.Config.Comment = *configComment
 	}
 
 	{

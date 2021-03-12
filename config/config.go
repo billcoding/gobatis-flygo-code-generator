@@ -10,6 +10,7 @@ type Configuration struct {
 	Model         *ModelConfiguration
 	Mapper        *MapperConfiguration
 	Config        *CfgConfiguration
+	Predicate     *PredicateConfiguration
 	Controller    *ControllerConfiguration
 	Service       *ServiceConfiguration
 }
@@ -52,9 +53,13 @@ type MapperConfiguration struct {
 }
 
 type CfgConfiguration struct {
-	PKG     string
-	Name    string
-	Comment bool
+	PKG  string
+	Name string
+}
+
+type PredicateConfiguration struct {
+	PKG  string
+	Name string
 }
 
 type ControllerConfiguration struct {

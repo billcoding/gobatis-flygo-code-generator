@@ -9,6 +9,8 @@ import (
     . "github.com/billcoding/gobatis"
     . "{{.Config.Module}}/{{.Mapper.Model.PKG}}"
     c "{{.Config.Module}}/{{.Config.Config.PKG}}"
+    p "{{.Config.Module}}/predicate"
+    "fmt"
     "strings"
 )
 
@@ -127,7 +129,12 @@ func (m *{{.Mapper.Name}}) SelectByID({{range $i,$e := .Mapper.Model.Ids}}{{if g
 
 // SelectOneByModel selects one record by model
 func (m *{{.Mapper.Name}}) SelectOneByModel(model *{{.Mapper.Model.Name}}) *{{.Mapper.Model.Name}} {
-    list := m.SelectByModel(model)
+    return m.SelectOneByModelWithPredicate(model, nil)
+}
+
+// SelectOneByModelWithPredicate selects one record by model with predicate
+func (m *{{.Mapper.Name}}) SelectOneByModelWithPredicate(model *{{.Mapper.Model.Name}}, predicate p.Predicate) *{{.Mapper.Model.Name}} {
+    list := m.SelectByModel(model, predicate)
     if len(list) > 0 {
         return list[0]
     }
@@ -136,7 +143,12 @@ func (m *{{.Mapper.Name}}) SelectOneByModel(model *{{.Mapper.Model.Name}}) *{{.M
 
 // SelectByModel selects records by model
 func (m *{{.Mapper.Name}}) SelectByModel(model *{{.Mapper.Model.Name}}) []*{{.Mapper.Model.Name}} {
-    whereSQL, params := m.generateWhereSQL(model)
+	return m.SelectByModelWithPredicate(model, nil)
+}
+
+// SelectByModelWithPredicate selects records by model with predicate
+func (m *{{.Mapper.Name}}) SelectByModelWithPredicate(model *{{.Mapper.Model.Name}}, predicate p.Predicate) []*{{.Mapper.Model.Name}} {
+    whereSQL, params := m.generateWhereSQL(model, predicate)
 	list := m.selectByModelMapper().Params(NewParam("WHERE_SQL", whereSQL)).Args(params...).Exec().List(new({{.Mapper.Model.Name}}))
 	newList := make([]*{{.Mapper.Model.Name}}, len(list))
 	for i := range list {
@@ -147,28 +159,38 @@ func (m *{{.Mapper.Name}}) SelectByModel(model *{{.Mapper.Model.Name}}) []*{{.Ma
 
 // SelectPageByModel selects page by model
 func (m *{{.Mapper.Name}}) SelectPageByModel(model *{{.Mapper.Model.Name}}, offset, size int) *Page {
-    whereSQL, params := m.generateWhereSQL(model)
+   return m.SelectPageByModelWithPredicate(model, nil, offset, size)
+}
+
+// SelectPageByModelWithPredicate selects page by model with predicate
+func (m *{{.Mapper.Name}}) SelectPageByModelWithPredicate(model *{{.Mapper.Model.Name}}, predicate p.Predicate, offset, size int) *Page {
+    whereSQL, params := m.generateWhereSQL(model, predicate)
 	return m.selectPageByModelMapper().Params(NewParam("WHERE_SQL", whereSQL)).Args(params...).Page(new({{.Mapper.Model.Name}}), offset, size)
 }
 
 // SelectPageMapByModel selects map page by model
 func (m *{{.Mapper.Name}}) SelectPageMapByModel(model *{{.Mapper.Model.Name}}, offset, size int) *PageMap {
-    whereSQL, params := m.generateWhereSQL(model)
+	return m.SelectPageMapByModelWithPredicate(model, nil, offset, size)
+}
+
+// SelectPageMapByModelWithPredicate selects map page by model with predicate
+func (m *{{.Mapper.Name}}) SelectPageMapByModelWithPredicate(model *{{.Mapper.Model.Name}}, predicate p.Predicate, offset, size int) *PageMap {
+    whereSQL, params := m.generateWhereSQL(model, predicate)
 	return m.selectPageMapByModelMapper().Params(NewParam("WHERE_SQL", whereSQL)).Args(params...).PageMap(offset, size)
 }
 
 // generateWhereSQL generate Where SQL for Query
-func (m *{{.Mapper.Name}}) generateWhereSQL(model *{{.Mapper.Model.Name}}) (string, []interface{}) {
+func (m *{{.Mapper.Name}}) generateWhereSQL(model *{{.Mapper.Model.Name}}, predicate p.Predicate) (string, []interface{}) {
     params := make([]interface{}, 0)
  	wheres := make([]string, 0)
  	{{range $i,$e := .Mapper.Model.Ids}}
  	if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
- 	    wheres = append(wheres, "t.{{$e.Column.Name}} = ?")
+ 	    wheres = append(wheres, m.generateWhereCond("{{$e.Column.Name}}", predicate))
  	    params = append(params, model.{{$e.Name}})
  	}
  	{{end}}{{range $i,$e := .Mapper.Model.Fields}}
  	if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
- 	    wheres = append(wheres, "t.{{$e.Column.Name}} = ?")
+ 	    wheres = append(wheres, m.generateWhereCond("{{$e.Column.Name}}", predicate))
  	    params = append(params, model.{{$e.Name}})
  	}
  	{{end}}
@@ -176,6 +198,34 @@ func (m *{{.Mapper.Name}}) generateWhereSQL(model *{{.Mapper.Model.Name}}) (stri
  	    return "", params
  	}
  	return " AND " + strings.Join(wheres, " AND "), params
+}
+
+// generateWhereCond generate Where Cond
+func (m *{{.Mapper.Name}}) generateWhereCond(column string, predicate p.Predicate) string {
+    if predicate == nil {
+        return fmt.Sprintf("t.%s = ?", column)
+    }
+    if pt, have := predicate[column]; have {
+        switch pt {
+            case p.Eq:
+                return fmt.Sprintf("t.%s = ?", column)
+            case p.NotEq:
+                return fmt.Sprintf("NOT t.%s = ?", column)
+            case p.Like:
+                return fmt.Sprintf("INSTR(t.%s, ?) > 0", column)
+            case p.NotLike:
+                return fmt.Sprintf("NOT INSTR(t.%s, ?) > 0", column)
+            case p.Gt:
+                return fmt.Sprintf("t.%s > ?", column)
+            case p.NotGt:
+                return fmt.Sprintf("NOT t.%s > ?", column)
+            case p.Lt:
+                return fmt.Sprintf("t.%s < ?", column)
+            case p.NotLt:
+                return fmt.Sprintf("NOT t.%s > ?", column)
+        }
+    }
+    return fmt.Sprintf("t.%s = ?", column)
 }
 
 func init() {

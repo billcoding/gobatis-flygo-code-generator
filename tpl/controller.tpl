@@ -15,7 +15,7 @@ type {{.Controller.Name}} struct {
 }
 
 func init() {
-    app := GetApp()
+    app := flygo.GetApp()
     {{.Controller.VarName}} := &{{.Controller.Name}}{}
     app.REST({{.Controller.VarName}})
 }
