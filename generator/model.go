@@ -99,11 +99,11 @@ func (eg *ModelGenerator) Init() *ModelGenerator {
 			eg.Model.NoDefaultFields = append(eg.Model.NoDefaultFields, field)
 		}
 	}
-
 	if !eg.Model.HaveId {
 		panic(fmt.Sprintf("Table of [%s] required at least one PRI column", eg.Model.Table.Name))
 	}
 	eg.Model.IntId = strings.HasPrefix(eg.Model.Ids[0].Type, "int")
+	eg.Model.IdCount = len(eg.Model.Ids)
 	return eg
 }
 

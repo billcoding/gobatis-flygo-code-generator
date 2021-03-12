@@ -47,7 +47,7 @@ type {{.Mapper.Name}} struct {
 	selectPageMapByModelMapper func() *SelectMapper
 }
 
-// Insert inserts one record
+{{if .Mapper.Model.IntId}}{{if lt .Mapper.Model.IdCount 2}}// Insert inserts one record
 func (m *{{.Mapper.Name}}) Insert(model *{{.Mapper.Model.Name}}) (bool, int64) {
     return m.InsertWithTX(nil, model)
 }
@@ -67,6 +67,24 @@ func (m *{{.Mapper.Name}}) InsertWithTX(TX *TX, model *{{.Mapper.Model.Name}}) (
 	}
 	return false, 0
 }
+{{end}}{{else}}
+// Insert inserts one record
+func (m *{{.Mapper.Name}}) Insert(model *{{.Mapper.Model.Name}}) bool {
+    return m.InsertWithTX(nil, model)
+}
+
+// Insert inserts one record with a tx
+func (m *{{.Mapper.Name}}) InsertWithTX(TX *TX, model *{{.Mapper.Model.Name}}) bool {
+    insertMapper := m.insertMapper()
+    insertMapper.Args({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}model.{{$e.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}model.{{$e.Name}}{{end}})
+    var err error
+	if TX != nil {
+	   TX.Update(insertMapper)
+	} else {
+	    err = insertMapper.Exec()
+	}
+	return err == nil
+}{{end}}
 
 // DeleteByID deletes one record by ID
 func (m *{{.Mapper.Name}}) DeleteByID({{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}},{{end}}{{$e.Name}} {{$e.Type}}{{end}}) bool {

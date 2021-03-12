@@ -13,4 +13,5 @@ type Model struct {
 	Ids             []*Field
 	ImportTime      bool
 	IntId           bool
+	IdCount         int
 }
