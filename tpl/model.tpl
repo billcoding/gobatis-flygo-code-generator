@@ -45,10 +45,10 @@ func Default{{.Model.Name}}({{if not .Model.IntId}}{{range $i,$e := .Model.Ids}}
 
 var {{.Model.Name}}Columns = &struct{ {{range $i, $e := .Model.Ids}}
     {{if $e.Comment}}// {{$e.Name}} {{$e.Column.Comment}}{{end}}
-    {{$e.Name}} string
+    {{$e.Name}} predicate.Column
     {{end}}{{range $i, $e := .Model.Fields}}
     {{if $e.Comment}}// {{$e.Name}} {{$e.Column.Comment}}{{end}}
-    {{$e.Name}} string
+    {{$e.Name}} predicate.Column
     {{end}}
 }{ {{range $i, $e := .Model.Ids}}
     {{$e.Name}} : "{{$e.Column.Name}}",
