@@ -200,53 +200,61 @@ func (m *{{.Mapper.Name}}) SelectPageMapByModelWithPredicates(model *{{.Mapper.M
 }
 
 // mergeSQL merge SQL with AND and OR
-func (m *{{.Mapper.Name}}) mergeSQL(model *{{.Mapper.Model.Name}}, andPredicate p.Predicate, orPredicate p.Predicate) (string, []interface{}) {
-    andWhereSQL := ""
-    orWhereSQL := ""
-    params := make([]interface{}, 0)
-    andWhereSQLs, andParams := m.generateWhereSQL(model, andPredicate)
-    if andWhereSQLs != nil && len(andWhereSQLs) > 0 {
-        andWhereSQL = strings.Join(andWhereSQLs, " AND ")
-    }
-    if andParams != nil && len(andParams) > 0 {
-        params = append(params, andParams...)
-    }
-    orWhereSQLs, orParams := m.generateWhereSQL(model, orPredicate)
-    if orWhereSQLs != nil && len(orWhereSQLs) > 0 {
-        orWhereSQL = " AND (" + strings.Join(orWhereSQLs, " OR ") + ")"
-    }
-    if orParams != nil && len(orParams) > 0 {
-        params = append(params, orParams...)
-    }
-    whereSQL := andWhereSQL + orWhereSQL
-    return whereSQL, params
+func (m *{{.Mapper.Name}}) mergeSQL(model *Country, andPredicate p.Predicate, orPredicate p.Predicate) (string, []interface{}) {
+	andWhereSQL := ""
+	orWhereSQL := ""
+	params := make([]interface{}, 0)
+	andWhereSQLs, andParams := m.generateWhereSQL(model, andPredicate)
+	if andWhereSQLs != nil && len(andWhereSQLs) > 0 {
+		andWhereSQL = "(" + strings.Join(andWhereSQLs, " AND ") + ")"
+	}
+	if andParams != nil && len(andParams) > 0 {
+		params = append(params, andParams...)
+	}
+	orWhereSQLs, orParams := m.generateWhereSQL(model, orPredicate)
+	if orWhereSQLs != nil && len(orWhereSQLs) > 0 {
+		orWhereSQL = " (" + strings.Join(orWhereSQLs, " OR ") + ")"
+	}
+	if orParams != nil && len(orParams) > 0 {
+		params = append(params, orParams...)
+	}
+	whereSQL := ""
+	if andWhereSQL != "" {
+		whereSQL += " AND " + andWhereSQL
+	}
+	if orWhereSQL != "" {
+		whereSQL += " AND " + orWhereSQL
+	}
+	return whereSQL, params
 }
 
 // generateWhereSQL generate Where SQL for Query
 func (m *{{.Mapper.Name}}) generateWhereSQL(model *{{.Mapper.Model.Name}}, predicate p.Predicate) ([]string, []interface{}) {
     params := make([]interface{}, 0)
  	wheres := make([]string, 0)
- 	{{range $i,$e := .Mapper.Model.Ids}}
- 	if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
- 	    ptSQL, ptParams := m.generateWhereCond("{{$e.Column.Name}}", predicate)
- 	    wheres = append(wheres, ptSQL)
- 	    if ptParams != nil && len(ptParams) > 0 {
- 	        params = append(params, ptParams...)
- 	    } else {
- 	        params = append(params, model.{{$e.Name}})
- 	    }
+ 	if predicate != nil && len(predicate) > 0 {
+        {{range $i,$e := .Mapper.Model.Ids}}
+        if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
+            ptSQL, ptParams := m.generateWhereCond("{{$e.Column.Name}}", predicate)
+            wheres = append(wheres, ptSQL)
+            if ptParams != nil && len(ptParams) > 0 {
+                params = append(params, ptParams...)
+            } else {
+                params = append(params, model.{{$e.Name}})
+            }
+        }
+        {{end}}{{range $i,$e := .Mapper.Model.Fields}}
+        if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
+            ptSQL, ptParams := m.generateWhereCond("{{$e.Column.Name}}", predicate)
+            wheres = append(wheres, ptSQL)
+            if ptParams != nil && len(ptParams) > 0 {
+                params = append(params, ptParams...)
+            } else {
+                params = append(params, model.{{$e.Name}})
+            }
+        }
+        {{end}}
  	}
- 	{{end}}{{range $i,$e := .Mapper.Model.Fields}}
- 	if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
- 	    ptSQL, ptParams := m.generateWhereCond("{{$e.Column.Name}}", predicate)
- 	    wheres = append(wheres, ptSQL)
- 	    if ptParams != nil && len(ptParams) > 0 {
- 	        params = append(params, ptParams...)
- 	    } else {
- 	        params = append(params, model.{{$e.Name}})
- 	    }
- 	}
- 	{{end}}
  	return wheres, params
 }
 
