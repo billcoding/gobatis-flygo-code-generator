@@ -30,7 +30,7 @@ func New{{.Model.Name}}({{if not .Model.IntId}}{{range $i,$e := .Model.Ids}}{{$e
 }
 
 // Default{{.Model.Name}} returns new {{.Model.Name}} with default valued fields pointer
-func Default{{.Model.Name}}({{if not .Model.IntId}}{{range $i,$e := .Model.Ids}}{{$e.Name}} {{$e.Type}}, {{end}}{{end}}{{range $i, $e := .Model.NoDefaultFields}}{{if gt $i 0}}, {{end}}{{$e.Name}} {{$e.Type}}{{end}}) *{{.Model.Name}} {
+func Default{{.Model.Name}}({{if not .Model.IntId}}{{range $i,$e := .Model.Ids}}{{if gt $i 0}}, {{end}}{{$e.Name}} {{$e.Type}}{{end}}{{end}}{{if not .Model.IntId}}{{range $i, $e := .Model.NoDefaultFields}}, {{$e.Name}} {{$e.Type}}{{end}}{{else}}{{range $i, $e := .Model.NoDefaultFields}}{{if gt $i 0}}, {{end}}{{$e.Name}} {{$e.Type}}{{end}}{{end}}) *{{.Model.Name}} {
     m := &{{.Model.Name}}{}
     {{if not .Model.IntId}}{{range $i, $e := .Model.Ids}}
     m.{{$e.Name}} = {{$e.Name}}
