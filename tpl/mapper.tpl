@@ -134,7 +134,7 @@ func (m *{{.Mapper.Name}}) SelectOneByModel(model *{{.Mapper.Model.Name}}) *{{.M
 
 // SelectOneByModelWithPredicate selects one record by model with predicate
 func (m *{{.Mapper.Name}}) SelectOneByModelWithPredicate(model *{{.Mapper.Model.Name}}, predicate p.Predicate) *{{.Mapper.Model.Name}} {
-    list := m.SelectByModel(model, predicate)
+    list := m.SelectByModelWithPredicate(model, predicate)
     if len(list) > 0 {
         return list[0]
     }
@@ -205,7 +205,7 @@ func (m *{{.Mapper.Name}}) generateWhereCond(column string, predicate p.Predicat
     if predicate == nil {
         return fmt.Sprintf("t.%s = ?", column)
     }
-    if pt, have := predicate[column]; have {
+    if pt, have := predicate[p.Column(column)]; have {
         switch pt {
             case p.Eq:
                 return fmt.Sprintf("t.%s = ?", column)
