@@ -10,7 +10,6 @@ import (
     . "{{.Config.Module}}/{{.Mapper.Model.PKG}}"
     c "{{.Config.Module}}/{{.Config.Config.PKG}}"
     p "{{.Config.Module}}/predicate"
-    "fmt"
     "strings"
 )
 
@@ -127,39 +126,47 @@ func (m *{{.Mapper.Name}}) SelectByID({{range $i,$e := .Mapper.Model.Ids}}{{if g
 	return nil
 }
 
-// SelectOneByModel selects one record by model
+// SelectOneByModel
 func (m *{{.Mapper.Name}}) SelectOneByModel(model *{{.Mapper.Model.Name}}) *{{.Mapper.Model.Name}} {
-    return m.SelectOneByModelWithPredicate(model, nil)
+	return m.SelectOneByModelAndSort(model, nil)
 }
 
-// SelectOneByModelWithPredicate selects one record by model with predicate
-func (m *{{.Mapper.Name}}) SelectOneByModelWithPredicate(model *{{.Mapper.Model.Name}}, predicate p.Predicate) *{{.Mapper.Model.Name}} {
-    return m.SelectOneByModelWithPredicates(model, predicate, nil)
+// SelectOneByModelAndSort
+func (m *{{.Mapper.Name}}) SelectOneByModelAndSort(model *{{.Mapper.Model.Name}}, sorts ...p.Sort) *{{.Mapper.Model.Name}} {
+	list := m.SelectByModelAndSort(model, sorts...)
+	if len(list) > 0 {
+		return list[0]
+	}
+	return nil
 }
 
-// SelectOneByModelWithPredicates selects one record by model with predicate AND and OR
-func (m *{{.Mapper.Name}}) SelectOneByModelWithPredicates(model *{{.Mapper.Model.Name}}, andPredicate p.Predicate, orPredicate p.Predicate) *{{.Mapper.Model.Name}} {
-    list := m.SelectByModelWithPredicates(model, andPredicate, orPredicate)
-    if len(list) > 0 {
-        return list[0]
-    }
-    return nil
+// SelectOneByCond
+func (m *{{.Mapper.Name}}) SelectOneByCond(conds ...p.Cond) *{{.Mapper.Model.Name}} {
+	return m.SelectOneByCondAndSort(conds, nil)
 }
 
-// SelectByModel selects records by model
+// SelectOneByCondAndSort
+func (m *{{.Mapper.Name}}) SelectOneByCondAndSort(conds []p.Cond, sorts ...p.Sort) *{{.Mapper.Model.Name}} {
+	list := m.SelectByCondAndSort(conds, sorts...)
+	if len(list) > 0 {
+		return list[0]
+	}
+	return nil
+}
+
+// SelectByModel
 func (m *{{.Mapper.Name}}) SelectByModel(model *{{.Mapper.Model.Name}}) []*{{.Mapper.Model.Name}} {
-	return m.SelectByModelWithPredicate(model, nil)
+	return m.SelectByModelAndSort(model, nil)
 }
 
-// SelectByModelWithPredicate selects records by model with predicate
-func (m *{{.Mapper.Name}}) SelectByModelWithPredicate(model *{{.Mapper.Model.Name}}, predicate p.Predicate) []*{{.Mapper.Model.Name}} {
-    return m.SelectByModelWithPredicates(model, predicate, nil)
-}
-
-// SelectByModelWithPredicates selects records by model with predicate AND and OR
-func (m *{{.Mapper.Name}}) SelectByModelWithPredicates(model *{{.Mapper.Model.Name}}, andPredicate p.Predicate, orPredicate p.Predicate) []*{{.Mapper.Model.Name}} {
-    whereSQL, params := m.mergeSQL(model, andPredicate, orPredicate)
-	list := m.selectByModelMapper().Params(NewParam("WHERE_SQL", whereSQL)).Args(params...).Exec().List(new({{.Mapper.Model.Name}}))
+// SelectByModelAndSort
+func (m *{{.Mapper.Name}}) SelectByModelAndSort(model *{{.Mapper.Model.Name}}, sorts ...p.Sort) []*{{.Mapper.Model.Name}} {
+	whereSQL, params := m.generateWhereSQL(model)
+	sortSQL := m.generateSortSQL(sorts...)
+	list := m.selectByModelMapper().Params(
+		NewParam("WHERE_SQL", whereSQL),
+		NewParam("SORT_SQL", sortSQL),
+	).Args(params...).Exec().List(new({{.Mapper.Model.Name}}))
 	newList := make([]*{{.Mapper.Model.Name}}, len(list))
 	for i := range list {
 		newList[i] = list[i].(*{{.Mapper.Model.Name}})
@@ -167,107 +174,126 @@ func (m *{{.Mapper.Name}}) SelectByModelWithPredicates(model *{{.Mapper.Model.Na
 	return newList
 }
 
-// SelectPageByModel selects page by model
+// SelectByCond
+func (m *{{.Mapper.Name}}) SelectByCond(conds ...p.Cond) []*{{.Mapper.Model.Name}} {
+	return m.SelectByCondAndSort(conds, nil)
+}
+
+// SelectByCondAndSort
+func (m *{{.Mapper.Name}}) SelectByCondAndSort(conds []p.Cond, sorts ...p.Sort) []*{{.Mapper.Model.Name}} {
+	whereSQL, params := m.generateCondSQL(conds...)
+	sortSQL := m.generateSortSQL(sorts...)
+	list := m.selectByModelMapper().Params(
+		NewParam("WHERE_SQL", whereSQL),
+		NewParam("SORT_SQL", sortSQL),
+	).Args(params...).Exec().List(new({{.Mapper.Model.Name}}))
+	newList := make([]*{{.Mapper.Model.Name}}, len(list))
+	for i := range list {
+		newList[i] = list[i].(*{{.Mapper.Model.Name}})
+	}
+	return newList
+}
+
+// SelectPageByModel
 func (m *{{.Mapper.Name}}) SelectPageByModel(model *{{.Mapper.Model.Name}}, offset, size int) *Page {
-   return m.SelectPageByModelWithPredicate(model, offset, size, nil)
+	return m.SelectPageByModelAndSort(model, offset, size, nil)
 }
 
-// SelectPageByModelWithPredicate selects page by model with predicate
-func (m *{{.Mapper.Name}}) SelectPageByModelWithPredicate(model *{{.Mapper.Model.Name}}, offset, size int, predicate p.Predicate) *Page {
-    return m.SelectPageByModelWithPredicates(model, offset, size, predicate, nil)
+// SelectPageByModelAndSort
+func (m *{{.Mapper.Name}}) SelectPageByModelAndSort(model *{{.Mapper.Model.Name}}, offset, size int, sorts ...p.Sort) *Page {
+	whereSQL, params := m.generateWhereSQL(model)
+	sortSQL := m.generateSortSQL(sorts...)
+	return m.selectByModelMapper().Params(
+		NewParam("WHERE_SQL", whereSQL),
+		NewParam("SORT_SQL", sortSQL),
+	).Args(params...).Page(new({{.Mapper.Model.Name}}), offset, size)
 }
 
-// SelectPageByModelWithPredicates selects page by model with predicate AND and OR
-func (m *{{.Mapper.Name}}) SelectPageByModelWithPredicates(model *{{.Mapper.Model.Name}}, offset, size int, andPredicate p.Predicate, orPredicate p.Predicate) *Page {
-    whereSQL, params := m.mergeSQL(model, andPredicate, orPredicate)
-	return m.selectPageByModelMapper().Params(NewParam("WHERE_SQL", whereSQL)).Args(params...).Page(new({{.Mapper.Model.Name}}), offset, size)
+// SelectPageByCond
+func (m *{{.Mapper.Name}}) SelectPageByCond(conds []p.Cond, offset, size int) *Page {
+	return m.SelectPageByCondAndSort(conds, offset, size, nil)
 }
 
-// SelectPageMapByModel selects map page by model
+// SelectPageByCondAndSort
+func (m *{{.Mapper.Name}}) SelectPageByCondAndSort(conds []p.Cond, offset, size int, sorts ...p.Sort) *Page {
+	whereSQL, params := m.generateCondSQL(conds...)
+	sortSQL := m.generateSortSQL(sorts...)
+	return m.selectByModelMapper().Params(
+		NewParam("WHERE_SQL", whereSQL),
+		NewParam("SORT_SQL", sortSQL),
+	).Args(params...).Page(new({{.Mapper.Model.Name}}), offset, size)
+}
+
+// SelectPageMapByModel
 func (m *{{.Mapper.Name}}) SelectPageMapByModel(model *{{.Mapper.Model.Name}}, offset, size int) *PageMap {
-	return m.SelectPageMapByModelWithPredicate(model, offset, size, nil)
+	return m.SelectPageMapByModelAndSort(model, offset, size, nil)
 }
 
-// SelectPageMapByModelWithPredicate selects map page by model with predicate
-func (m *{{.Mapper.Name}}) SelectPageMapByModelWithPredicate(model *{{.Mapper.Model.Name}}, offset, size int, predicate p.Predicate) *PageMap {
-	return m.SelectPageMapByModelWithPredicates(model, offset, size, predicate, nil)
+// SelectPageMapByModelAndSort
+func (m *{{.Mapper.Name}}) SelectPageMapByModelAndSort(model *{{.Mapper.Model.Name}}, offset, size int, sorts ...p.Sort) *PageMap {
+	whereSQL, params := m.generateWhereSQL(model)
+	sortSQL := m.generateSortSQL(sorts...)
+	return m.selectByModelMapper().Params(
+		NewParam("WHERE_SQL", whereSQL),
+		NewParam("SORT_SQL", sortSQL),
+	).Args(params...).PageMap(offset, size)
 }
 
-// SelectPageMapByModelWithPredicates selects map page by model with predicate
-func (m *{{.Mapper.Name}}) SelectPageMapByModelWithPredicates(model *{{.Mapper.Model.Name}}, offset, size int, andPredicate p.Predicate, orPredicate p.Predicate) *PageMap {
-	whereSQL, params := m.mergeSQL(model, andPredicate, orPredicate)
-	return m.selectPageMapByModelMapper().Params(NewParam("WHERE_SQL", whereSQL)).Args(params...).PageMap(offset, size)
+// SelectPageMapByCond
+func (m *{{.Mapper.Name}}) SelectPageMapByCond(conds []p.Cond, offset, size int) *PageMap {
+	return m.SelectPageMapByCondAndSort(conds, offset, size, nil)
 }
 
-// mergeSQL merge SQL with AND and OR
-func (m *{{.Mapper.Name}}) mergeSQL(model *Country, andPredicate p.Predicate, orPredicate p.Predicate) (string, []interface{}) {
-	andWhereSQL := ""
-	orWhereSQL := ""
-	params := make([]interface{}, 0)
-	andWhereSQLs, andParams := m.generateWhereSQL(model, andPredicate)
-	if andWhereSQLs != nil && len(andWhereSQLs) > 0 {
-		andWhereSQL = "(" + strings.Join(andWhereSQLs, " AND ") + ")"
-	}
-	if andParams != nil && len(andParams) > 0 {
-		params = append(params, andParams...)
-	}
-	orWhereSQLs, orParams := m.generateWhereSQL(model, orPredicate)
-	if orWhereSQLs != nil && len(orWhereSQLs) > 0 {
-		orWhereSQL = " (" + strings.Join(orWhereSQLs, " OR ") + ")"
-	}
-	if orParams != nil && len(orParams) > 0 {
-		params = append(params, orParams...)
-	}
-	whereSQL := ""
-	if andWhereSQL != "" {
-		whereSQL += " AND " + andWhereSQL
-	}
-	if orWhereSQL != "" {
-		whereSQL += " AND " + orWhereSQL
-	}
-	return whereSQL, params
+// SelectPageMapByCondAndSort
+func (m *{{.Mapper.Name}}) SelectPageMapByCondAndSort(conds []p.Cond, offset, size int, sorts ...p.Sort) *PageMap {
+	whereSQL, params := m.generateCondSQL(conds...)
+	sortSQL := m.generateSortSQL(sorts...)
+	return m.selectByModelMapper().Params(
+		NewParam("WHERE_SQL", whereSQL),
+		NewParam("SORT_SQL", sortSQL),
+	).Args(params...).PageMap(offset, size)
 }
 
-// generateWhereSQL generate Where SQL for Query
-func (m *{{.Mapper.Name}}) generateWhereSQL(model *{{.Mapper.Model.Name}}, predicate p.Predicate) ([]string, []interface{}) {
+// generateWhereSQL
+func (m *{{.Mapper.Name}}) generateWhereSQL(model *{{.Mapper.Model.Name}}) ([]string, []interface{}) {
     params := make([]interface{}, 0)
  	wheres := make([]string, 0)
- 	if predicate != nil && len(predicate) > 0 {
-        {{range $i,$e := .Mapper.Model.Ids}}
-        if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
-            ptSQL, ptParams := m.generateWhereCond("{{$e.Column.Name}}", predicate)
-            wheres = append(wheres, ptSQL)
-            if ptParams != nil && len(ptParams) > 0 {
-                params = append(params, ptParams...)
-            } else {
-                params = append(params, model.{{$e.Name}})
-            }
-        }
-        {{end}}{{range $i,$e := .Mapper.Model.Fields}}
-        if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
-            ptSQL, ptParams := m.generateWhereCond("{{$e.Column.Name}}", predicate)
-            wheres = append(wheres, ptSQL)
-            if ptParams != nil && len(ptParams) > 0 {
-                params = append(params, ptParams...)
-            } else {
-                params = append(params, model.{{$e.Name}})
-            }
-        }
-        {{end}}
- 	}
+    {{range $i,$e := .Mapper.Model.Ids}}
+    if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
+        wheres = append(wheres, "t.{{$e.Column.Name}} = ?")
+        params = append(params, model.{{$e.Name}})
+    }
+    {{end}}{{range $i,$e := .Mapper.Model.Fields}}
+    if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
+        wheres = append(wheres, "t.{{$e.Column.Name}} = ?")
+        params = append(params, model.{{$e.Name}})
+    }
+    {{end}}
  	return wheres, params
 }
 
-// generateWhereCond generate Where Cond
-func (m *{{.Mapper.Name}}) generateWhereCond(column p.Column, predicate p.Predicate) (string, []interface{}) {
-    if predicate == nil || len(predicate) <= 0 {
-        return fmt.Sprintf("t.%s = ?", column), nil
-    }
-    pt, have := predicate[column]
-    if !have {
-        return fmt.Sprintf("t.%s = ?", column), nil
-    }
-    return pt.SQL(column)
+// generateSortSQL
+func (m *{{.Mapper.Name}}) generateSortSQL(sorts ...p.Sort) string {
+	sortSQLs := make([]string, 0)
+	for _, sort := range sorts {
+		sortSQLs = append(sortSQLs, sort.SQL())
+	}
+	if len(sortSQLs) <= 0 {
+		return ""
+	}
+	return strings.Join(sortSQLs, ",")
+}
+
+// generateCondSQL generate Cond SQL for Query
+func (m *{{.Mapper.Name}}) generateCondSQL(conds ...p.Cond) ([]string, []interface{}) {
+	params := make([]interface{}, 0)
+	wheres := make([]string, 0)
+	for _, cond := range conds {
+		condSQL, condParams := cond.SQL()
+		wheres = append(wheres, condSQL)
+		params = append(params, condParams)
+	}
+	return wheres, params
 }
 
 func init() {
@@ -295,15 +321,15 @@ var {{.Mapper.Name}}XML = `
     </select>
 
     <select id="SelectByModel">
-        SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE 1 = 1 @WHERE_SQL@
+        SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE 1 = 1 @WHERE_SQL@ @SORT_SQL@
     </select>
 
     <select id="SelectPageByModel">
-        SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE 1 = 1 @WHERE_SQL@
+        SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE 1 = 1 @WHERE_SQL@ @SORT_SQL@
     </select>
 
     <select id="SelectPageMapByModel">
-        SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE 1 = 1 @WHERE_SQL@
+        SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE 1 = 1 @WHERE_SQL@ @SORT_SQL@
     </select>
 
 </batis-mapper>`
