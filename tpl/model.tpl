@@ -4,10 +4,13 @@ package {{.Config.Model.PKG}}
 {{if .Config.Global.Date}}// @since {{.Extra.Date}}{{end}}
 {{if .Config.Global.Copyright}}// @created by {{.Config.Global.CopyrightContent}}{{end}}
 {{if .Config.Global.Website}}// @repo {{.Config.Global.WebsiteContent}}{{end}}
+
 import (
-    {{if .Model.ImportTime}}"time"{{end}}
-    "{{.Config.Module}}/{{.Config.Predicate.PKG}}"
+    p "github.com/billcoding/gobatis/predicate"{{if .Model.ImportTime}}
+    "time"
+{{end}}
 )
+
 {{if .Config.Model.Comment}}// {{.Model.Name}} {{.Model.Table.Comment}}{{end}}
 type {{.Model.Name}} struct {
     {{range $i, $e := .Model.Ids}}
@@ -45,10 +48,10 @@ func Default{{.Model.Name}}({{if not .Model.IntId}}{{range $i,$e := .Model.Ids}}
 
 var {{.Model.Name}}Columns = &struct{ {{range $i, $e := .Model.Ids}}
     {{if $e.Comment}}// {{$e.Name}} {{$e.Column.Comment}}{{end}}
-    {{$e.Name}} predicate.Column
+    {{$e.Name}} p.Column
     {{end}}{{range $i, $e := .Model.Fields}}
     {{if $e.Comment}}// {{$e.Name}} {{$e.Column.Comment}}{{end}}
-    {{$e.Name}} predicate.Column
+    {{$e.Name}} p.Column
     {{end}}
 }{ {{range $i, $e := .Model.Ids}}
     {{$e.Name}} : "{{$e.Column.Name}}",

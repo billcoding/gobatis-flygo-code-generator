@@ -58,7 +58,6 @@ func main() {
 	if *mapper {
 		mapperGenerators := getMapperGenerators(modelGenerators)
 		generators = append(generators, mapperGenerators...)
-		generators = append(generators, getPredicateGenerator())
 	}
 
 	if *config {

@@ -7,9 +7,9 @@ package {{.Config.Mapper.PKG}}
 
 import (
     . "github.com/billcoding/gobatis"
+    p "github.com/billcoding/gobatis/predicate"
     . "{{.Config.Module}}/{{.Mapper.Model.PKG}}"
     c "{{.Config.Module}}/{{.Config.Config.PKG}}"
-    p "{{.Config.Module}}/predicate"
     "strings"
 )
 
@@ -255,45 +255,54 @@ func (m *{{.Mapper.Name}}) SelectPageMapByCondAndSort(conds []p.Cond, offset, si
 }
 
 // generateWhereSQL
-func (m *{{.Mapper.Name}}) generateWhereSQL(model *{{.Mapper.Model.Name}}) ([]string, []interface{}) {
+func (m *{{.Mapper.Name}}) generateWhereSQL(model *{{.Mapper.Model.Name}}) (string, []interface{}) {
     params := make([]interface{}, 0)
  	wheres := make([]string, 0)
-    {{range $i,$e := .Mapper.Model.Ids}}
-    if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
-        wheres = append(wheres, "t.{{$e.Column.Name}} = ?")
-        params = append(params, model.{{$e.Name}})
+ 	if model != nil {
+        {{range $i,$e := .Mapper.Model.Ids}}
+        if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
+            wheres = append(wheres, "t.{{$e.Column.Name}} = ?")
+            params = append(params, model.{{$e.Name}})
+        }
+        {{end}}{{range $i,$e := .Mapper.Model.Fields}}
+        if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
+            wheres = append(wheres, "t.{{$e.Column.Name}} = ?")
+            params = append(params, model.{{$e.Name}})
+        }
+        {{end}}
     }
-    {{end}}{{range $i,$e := .Mapper.Model.Fields}}
-    if model.{{$e.Name}} {{$e.OpName}} {{$e.OpVar}} {
-        wheres = append(wheres, "t.{{$e.Column.Name}} = ?")
-        params = append(params, model.{{$e.Name}})
+    if len(wheres) <= 0 {
+        return "", params
     }
-    {{end}}
- 	return wheres, params
+ 	return " AND " + strings.Join(wheres, " AND "), params
 }
 
 // generateSortSQL
 func (m *{{.Mapper.Name}}) generateSortSQL(sorts ...p.Sort) string {
 	sortSQLs := make([]string, 0)
 	for _, sort := range sorts {
-		sortSQLs = append(sortSQLs, sort.SQL())
+	    if sort != nil {
+		    sortSQLs = append(sortSQLs, sort.SQL())
+		}
 	}
 	if len(sortSQLs) <= 0 {
 		return ""
 	}
-	return strings.Join(sortSQLs, ",")
+	return " ORDER BY " + strings.Join(sortSQLs, ",")
 }
 
 // generateCondSQL generate Cond SQL for Query
-func (m *{{.Mapper.Name}}) generateCondSQL(conds ...p.Cond) ([]string, []interface{}) {
+func (m *{{.Mapper.Name}}) generateCondSQL(conds ...p.Cond) (string, []interface{}) {
 	params := make([]interface{}, 0)
-	wheres := make([]string, 0)
+	condSQLs := make([]string, 0)
 	for _, cond := range conds {
-		condSQL, condParams := cond.SQL()
-		wheres = append(wheres, condSQL)
-		params = append(params, condParams)
+	    if cond != nil {
+            condSQL, condParams := cond.SQL()
+            condSQLs = append(condSQLs, condSQL)
+            params = append(params, condParams...)
+		}
 	}
-	return wheres, params
+	return strings.Join(condSQLs, " "), params
 }
 
 func init() {

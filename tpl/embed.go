@@ -2,20 +2,18 @@ package tpl
 
 import "embed"
 
-//go:embed model.tpl mapper.tpl config.tpl controller.tpl service.tpl predicate.tpl
+//go:embed model.tpl mapper.tpl config.tpl controller.tpl service.tpl
 var FS embed.FS
 var modelTpl = `model.tpl`
 var mapperTpl = `mapper.tpl`
 var configTpl = `config.tpl`
 var controllerTpl = `controller.tpl`
 var serviceTpl = `service.tpl`
-var predicateTpl = `predicate.tpl`
 var modelTplContent = ""
 var mapperTplContent = ""
 var configTplContent = ""
 var controllerTplContent = ""
 var serviceTplContent = ""
-var predicateTplContent = ""
 
 func ModelTpl() string {
 	if modelTplContent == "" {
@@ -70,15 +68,4 @@ func ServiceTpl() string {
 		serviceTplContent = string(file)
 	}
 	return serviceTplContent
-}
-
-func PredicateTpl() string {
-	if predicateTplContent == "" {
-		file, err := FS.ReadFile(predicateTpl)
-		if err != nil {
-			panic(err)
-		}
-		predicateTplContent = string(file)
-	}
-	return predicateTplContent
 }

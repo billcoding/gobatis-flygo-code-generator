@@ -36,12 +36,6 @@ func getCfgGenerator() Generator {
 	}
 }
 
-func getPredicateGenerator() Generator {
-	return &PredicateGenerator{
-		C: CFG,
-	}
-}
-
 func getControllerGenerators(modelGenerators []Generator) []Generator {
 	cgs := make([]Generator, 0)
 	for _, eg := range modelGenerators {
