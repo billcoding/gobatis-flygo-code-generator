@@ -53,7 +53,7 @@ func (m *{{.Mapper.Name}}) Insert(model *{{.Mapper.Model.Name}}) (bool, int64) {
     return m.InsertWithTX(nil, model)
 }
 
-// Insert inserts one record with a tx
+// InsertWithTX inserts one record with a tx
 func (m *{{.Mapper.Name}}) InsertWithTX(TX *TX, model *{{.Mapper.Model.Name}}) (bool, int64) {
     insertMapper := m.insertMapper()
     insertMapper.Args({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}model.{{$e.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}model.{{$e.Name}}{{end}})
@@ -74,7 +74,7 @@ func (m *{{.Mapper.Name}}) Insert(model *{{.Mapper.Model.Name}}) bool {
     return m.InsertWithTX(nil, model)
 }
 
-// Insert inserts one record with a tx
+// InsertWithTX inserts one record with a tx
 func (m *{{.Mapper.Name}}) InsertWithTX(TX *TX, model *{{.Mapper.Model.Name}}) bool {
     insertMapper := m.insertMapper()
     insertMapper.Args({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}model.{{$e.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}model.{{$e.Name}}{{end}})
@@ -126,12 +126,12 @@ func (m *{{.Mapper.Name}}) SelectByID({{range $i,$e := .Mapper.Model.Ids}}{{if g
 	return nil
 }
 
-// SelectOneByModel
+// SelectOneByModel selects one by model
 func (m *{{.Mapper.Name}}) SelectOneByModel(model *{{.Mapper.Model.Name}}) *{{.Mapper.Model.Name}} {
 	return m.SelectOneByModelAndSort(model, nil)
 }
 
-// SelectOneByModelAndSort
+// SelectOneByModelAndSort selects one by model with sort
 func (m *{{.Mapper.Name}}) SelectOneByModelAndSort(model *{{.Mapper.Model.Name}}, sorts ...p.Sort) *{{.Mapper.Model.Name}} {
 	list := m.SelectByModelAndSort(model, sorts...)
 	if len(list) > 0 {
@@ -140,12 +140,12 @@ func (m *{{.Mapper.Name}}) SelectOneByModelAndSort(model *{{.Mapper.Model.Name}}
 	return nil
 }
 
-// SelectOneByCond
+// SelectOneByCond selects one by cond
 func (m *{{.Mapper.Name}}) SelectOneByCond(conds ...p.Cond) *{{.Mapper.Model.Name}} {
 	return m.SelectOneByCondAndSort(conds, nil)
 }
 
-// SelectOneByCondAndSort
+// SelectOneByCondAndSort selects one by cond with sort
 func (m *{{.Mapper.Name}}) SelectOneByCondAndSort(conds []p.Cond, sorts ...p.Sort) *{{.Mapper.Model.Name}} {
 	list := m.SelectByCondAndSort(conds, sorts...)
 	if len(list) > 0 {
@@ -154,12 +154,12 @@ func (m *{{.Mapper.Name}}) SelectOneByCondAndSort(conds []p.Cond, sorts ...p.Sor
 	return nil
 }
 
-// SelectByModel
+// SelectByModel selects by model
 func (m *{{.Mapper.Name}}) SelectByModel(model *{{.Mapper.Model.Name}}) []*{{.Mapper.Model.Name}} {
 	return m.SelectByModelAndSort(model, nil)
 }
 
-// SelectByModelAndSort
+// SelectByModelAndSort selects by model with sort
 func (m *{{.Mapper.Name}}) SelectByModelAndSort(model *{{.Mapper.Model.Name}}, sorts ...p.Sort) []*{{.Mapper.Model.Name}} {
 	whereSQL, params := m.generateWhereSQL(model)
 	sortSQL := m.generateSortSQL(sorts...)
@@ -174,12 +174,12 @@ func (m *{{.Mapper.Name}}) SelectByModelAndSort(model *{{.Mapper.Model.Name}}, s
 	return newList
 }
 
-// SelectByCond
+// SelectByCond selects by cond
 func (m *{{.Mapper.Name}}) SelectByCond(conds ...p.Cond) []*{{.Mapper.Model.Name}} {
 	return m.SelectByCondAndSort(conds, nil)
 }
 
-// SelectByCondAndSort
+// SelectByCondAndSort selects by cond with sort
 func (m *{{.Mapper.Name}}) SelectByCondAndSort(conds []p.Cond, sorts ...p.Sort) []*{{.Mapper.Model.Name}} {
 	whereSQL, params := m.generateCondSQL(conds...)
 	sortSQL := m.generateSortSQL(sorts...)
@@ -194,12 +194,12 @@ func (m *{{.Mapper.Name}}) SelectByCondAndSort(conds []p.Cond, sorts ...p.Sort) 
 	return newList
 }
 
-// SelectPageByModel
+// SelectPageByModel selects page by model
 func (m *{{.Mapper.Name}}) SelectPageByModel(model *{{.Mapper.Model.Name}}, offset, size int) *Page {
 	return m.SelectPageByModelAndSort(model, offset, size, nil)
 }
 
-// SelectPageByModelAndSort
+// SelectPageByModelAndSort selects page by model with sort
 func (m *{{.Mapper.Name}}) SelectPageByModelAndSort(model *{{.Mapper.Model.Name}}, offset, size int, sorts ...p.Sort) *Page {
 	whereSQL, params := m.generateWhereSQL(model)
 	sortSQL := m.generateSortSQL(sorts...)
@@ -209,12 +209,12 @@ func (m *{{.Mapper.Name}}) SelectPageByModelAndSort(model *{{.Mapper.Model.Name}
 	).Args(params...).Page(new({{.Mapper.Model.Name}}), offset, size)
 }
 
-// SelectPageByCond
+// SelectPageByCond selects page by cond
 func (m *{{.Mapper.Name}}) SelectPageByCond(conds []p.Cond, offset, size int) *Page {
 	return m.SelectPageByCondAndSort(conds, offset, size, nil)
 }
 
-// SelectPageByCondAndSort
+// SelectPageByCondAndSort selects page by cond with sort
 func (m *{{.Mapper.Name}}) SelectPageByCondAndSort(conds []p.Cond, offset, size int, sorts ...p.Sort) *Page {
 	whereSQL, params := m.generateCondSQL(conds...)
 	sortSQL := m.generateSortSQL(sorts...)
@@ -224,12 +224,12 @@ func (m *{{.Mapper.Name}}) SelectPageByCondAndSort(conds []p.Cond, offset, size 
 	).Args(params...).Page(new({{.Mapper.Model.Name}}), offset, size)
 }
 
-// SelectPageMapByModel
+// SelectPageMapByModel selects page map by model
 func (m *{{.Mapper.Name}}) SelectPageMapByModel(model *{{.Mapper.Model.Name}}, offset, size int) *PageMap {
 	return m.SelectPageMapByModelAndSort(model, offset, size, nil)
 }
 
-// SelectPageMapByModelAndSort
+// SelectPageMapByModelAndSort selects page map by model with sort
 func (m *{{.Mapper.Name}}) SelectPageMapByModelAndSort(model *{{.Mapper.Model.Name}}, offset, size int, sorts ...p.Sort) *PageMap {
 	whereSQL, params := m.generateWhereSQL(model)
 	sortSQL := m.generateSortSQL(sorts...)
@@ -239,12 +239,12 @@ func (m *{{.Mapper.Name}}) SelectPageMapByModelAndSort(model *{{.Mapper.Model.Na
 	).Args(params...).PageMap(offset, size)
 }
 
-// SelectPageMapByCond
+// SelectPageMapByCond selects page map by cond
 func (m *{{.Mapper.Name}}) SelectPageMapByCond(conds []p.Cond, offset, size int) *PageMap {
 	return m.SelectPageMapByCondAndSort(conds, offset, size, nil)
 }
 
-// SelectPageMapByCondAndSort
+// SelectPageMapByCondAndSort selects page map by cond with sort
 func (m *{{.Mapper.Name}}) SelectPageMapByCondAndSort(conds []p.Cond, offset, size int, sorts ...p.Sort) *PageMap {
 	whereSQL, params := m.generateCondSQL(conds...)
 	sortSQL := m.generateSortSQL(sorts...)
