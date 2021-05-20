@@ -25,8 +25,6 @@ type {{.Mapper.Name}} struct {
 	updateByIDMapper           *UpdateMapper
 	selectByIDMapper           *SelectMapper
 	selectByModelMapper        *SelectMapper
-	selectPageByModelMapper    *SelectMapper
-	selectPageMapByModelMapper *SelectMapper
 }
 {{if .Mapper.Model.IntId}}{{if lt .Mapper.Model.IdCount 2}}
 // Insert inserts one record
@@ -36,26 +34,25 @@ func (m *{{.Mapper.Name}}) Insert(model *{{.Mapper.Model.Name}}) (bool, int64) {
 
 // Inserts inserts some record
 func (m *{{.Mapper.Name}}) Inserts(models []*{{.Mapper.Model.Name}}) (bool, []int64) {
-    return m.InsertsWithTX(nil, model)
+    return m.InsertsWithTX(nil, models)
 }
 
 // InsertAll inserts some record
 func (m *{{.Mapper.Name}}) InsertAll(models []*{{.Mapper.Model.Name}}) bool {
-    return m.InsertAllWithTX(nil, model)
+    return m.InsertAllWithTX(nil, models)
 }
 
 // InsertWithTX inserts one record with a tx
 func (m *{{.Mapper.Name}}) InsertWithTX(TX *TX, model *{{.Mapper.Model.Name}}) (bool, int64) {
-    insertMapper := m.insertMapper
-    insertMapper.Args({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}model.{{$e.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}model.{{$e.Name}}{{end}})
+    m.insertMapper.Args({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}model.{{$e.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}model.{{$e.Name}}{{end}})
     var err error
 	if TX != nil {
-	   TX.Update(insertMapper)
+	   TX.Update(m.insertMapper)
 	} else {
-	    err = insertMapper.Exec()
+	    err = m.insertMapper.Exec()
 	}
 	if err == nil {
-		return true, insertMapper.InsertedId()
+		return true, m.insertMapper.InsertedId()
 	}
 	return false, 0
 }
@@ -71,15 +68,31 @@ func (m *{{.Mapper.Name}}) InsertsWithTX(TX *TX, models []*{{.Mapper.Model.Name}
 		}
 	}
 	return insertedCount == len(models), insertedIDs
+}
+
+// InsertAllWithTX inserts some record with a tx
+func (m *{{.Mapper.Name}}) InsertAllWithTX(TX *TX, models []*{{.Mapper.Model.Name}}) bool {
+	args := make([]interface{}, 0)
+	for _, model := range models {
+		args = append(args{{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}, model.{{$e.Name}}{{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}, model.{{$e.Name}}{{end}})
+	}
+	m.insertAllMapper.Prepare(models).Args(args...)
+    var err error
+	if TX != nil {
+	   TX.Update(m.insertAllMapper)
+	} else {
+	    err = m.insertAllMapper.Exec()
+	}
+	return err == nil
 }{{end}}{{else}}
 // Insert inserts one record
 func (m *{{.Mapper.Name}}) Insert(model *{{.Mapper.Model.Name}}) bool {
     return m.InsertWithTX(nil, model)
 }
 
-// Insert inserts some record
+// Inserts inserts some record
 func (m *{{.Mapper.Name}}) Inserts(models []*{{.Mapper.Model.Name}}) bool {
-    return m.InsertsWithTX(nil, model)
+    return m.InsertsWithTX(nil, models)
 }
 
 // InsertWithTX inserts one record with a tx
@@ -104,14 +117,14 @@ func (m *{{.Mapper.Name}}) InsertsWithTX(TX *TX, models []*{{.Mapper.Model.Name}
 		}
 	}
 	return insertedCount == len(models)
-}{{end}}
+}
 
 // InsertAll inserts some record
 func (m *{{.Mapper.Name}}) InsertAll(models []*{{.Mapper.Model.Name}}) bool {
-    return m.InsertAllWithTX(nil, model)
+    return m.InsertAllWithTX(nil, models)
 }
 
-// InsertsWithTX inserts some record with a tx
+// InsertAllWithTX inserts some record with a tx
 func (m *{{.Mapper.Name}}) InsertAllWithTX(TX *TX, models []*{{.Mapper.Model.Name}}) bool {
  	insertAllMapper := m.insertAllMapper
     insertAllMapper.Prepare(models)
@@ -122,7 +135,7 @@ func (m *{{.Mapper.Name}}) InsertAllWithTX(TX *TX, models []*{{.Mapper.Model.Nam
 	    err = insertAllMapper.Exec()
 	}
 	return err == nil
-}
+}{{end}}
 
 // DeleteByID deletes one record by ID
 func (m *{{.Mapper.Name}}) DeleteByID({{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}},{{end}}{{$e.Name}} {{$e.Type}}{{end}}) bool {
@@ -139,34 +152,34 @@ func (m *{{.Mapper.Name}}) DeleteByIDWithTX(TX *TX, {{range $i,$e := .Mapper.Mod
     return deleteByIDMapper.Exec() == nil
 }
 
-{{if eq .Mapper.Model.IdCount 1}}// DeleteByIDs deletes some record by IDs
-func (m *{{.Mapper.Name}}) DeleteByIDs({{ .Mapper.Model.Ids[0].Name}}s []{{ .Mapper.Model.Ids[0].Type}}) bool {
-	return m.DeleteByIDsWithTX(nil, {{ .Mapper.Model.Ids[0].Name}}s)
+{{if eq .Mapper.Model.IdCount 1}}{{
+	$id := (index .Mapper.Model.Ids 0)
+}}{{
+	$idName := $id.Name
+}}{{
+	$idType := $id.Type
+}}
+// DeleteByIDs deletes some record by IDs
+func (m *{{.Mapper.Name}}) DeleteByIDs({{ $idName }}s []{{ $idType }}) bool {
+	return m.DeleteByIDsWithTX(nil, {{ $idName }}s)
 }
 
 // DeleteByIDsWithTX deletes some record by IDs with a tx
-func (m *{{.Mapper.Name}}) DeleteByIDsWithTX(TX *TX, {{ .Mapper.Model.Ids[0].Name}}s []{{ .Mapper.Model.Ids[0].Type}}) bool {
-	deleteByIDs{{$e.Name}}Mapper := m.DeleteByIDs{{$e.Name}}Mapper.Prepare({{$e.Name}}s)
+func (m *{{.Mapper.Name}}) DeleteByIDsWithTX(TX *TX, IDs []{{ $idType }}) bool {
+	if IDs == nil || len(IDs) <= 0 {
+		return false
+	}
+	args := make([]interface{}, 0)
+	for i := range IDs {
+		args = append(args, IDs[i])
+	}
+	deleteByIDsMapper := m.deleteByIDsMapper.Prepare(IDs).Args(args...)
 	if TX != nil{
-		TX.Update(deleteByIDs{{$e.Name}}Mapper)
+		TX.Update(deleteByIDsMapper)
 		return true
 	}
-	return deleteByIDs{{$e.Name}}Mapper.Exec() == nil
+	return deleteByIDsMapper.Exec() == nil
 }{{end}}
-
-{{range $i,$e := .Mapper.Model.Ids}}{{$e.Name}}// DeleteBy{{$e.Name}} deletes one record by {{$e.Name}}
-func (m *{{.Mapper.Name}}) DeleteBy{{$e.Name}}({{$e.Name}} {{$e.Type}}) bool {
-    return m.DeleteBy{{$e.Name}}WithTX(nil, {{$e.Name}})
-}
-
-func (m *{{.Mapper.Name}}) DeleteBy{{$e.Name}}WithTX(TX *TX, {{$e.Name}} {{$e.Type}}) bool {
-    deleteBy{{$e.Name}}Mapper := m.deleteBy{{$e.Name}}Mapper.Args({{$e.Name}})
-    if TX != nil{
-        TX.Update(deleteBy{{$e.Name}}Mapper)
-        return true
-    }
-    return deleteBy{{$e.Name}}Mapper.Exec() == nil
-}{{$e.Type}}{{end}}
 
 // UpdateByID updates one record by ID
 func (m *{{.Mapper.Name}}) UpdateByID(model *{{.Mapper.Model.Name}}) bool {
@@ -381,8 +394,6 @@ func init() {
     	{{.Mapper.VarName}}.updateByIDMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "UpdateByID").Update()
     	{{.Mapper.VarName}}.selectByIDMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectByID").Select()
     	{{.Mapper.VarName}}.selectByModelMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectByModel").Select()
-    	{{.Mapper.VarName}}.selectPageByModelMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectPageByModel").Select()
-    	{{.Mapper.VarName}}.selectPageMapByModelMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectPageMapByModel").Select()
     }
 }
 
@@ -395,15 +406,18 @@ var {{.Mapper.Name}}XML = `
     </update>
 
     <update id="InsertAll">
-        INSERT INTO {{.Mapper.Model.Table.Name}}({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}{{$e.Column.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}{{$e.Column.Name}}{{end}}) VALUES
-         ({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}?, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}?{{end}})
+        INSERT INTO {{.Mapper.Model.Table.Name}}({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}{{$e.Column.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}{{$e.Column.Name}}{{end}}) VALUES {{ "{{ range $i,$e := . }}{{ if gt $i 0 }}, {{ end }}" }}({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}?, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}?{{end}}){{ "{{end}}" }}
     </update>
 
     <update id="DeleteByID">
         DELETE FROM {{.Mapper.Model.Table.Name}} WHERE {{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}} AND {{end}}{{$e.Column.Name}} = ?{{end}}
     </update>
-
-    <update id="UpdateByID">
+    {{if eq .Mapper.Model.IdCount 1}}
+    <update id="DeleteByIDs">
+		DELETE FROM {{.Mapper.Model.Table.Name}} WHERE {{ (index .Mapper.Model.Ids 0).Name }} IN ({{ "{{ range $i,$e := . }}{{if gt $i 0}}, {{end}}?{{end}}" }})
+	</update>
+	{{end}}
+	<update id="UpdateByID">
         UPDATE {{.Mapper.Model.Table.Name}} AS t SET {{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}t.{{$e.Column.Name}} = ?{{end}} WHERE {{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}} AND {{end}}t.{{$e.Column.Name}} = ?{{end}}
     </update>
 
@@ -412,14 +426,6 @@ var {{.Mapper.Name}}XML = `
     </select>
 
     <select id="SelectByModel">
-        SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE 1 = 1 @WHERE_SQL@ @SORT_SQL@
-    </select>
-
-    <select id="SelectPageByModel">
-        SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE 1 = 1 @WHERE_SQL@ @SORT_SQL@
-    </select>
-
-    <select id="SelectPageMapByModel">
         SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE 1 = 1 @WHERE_SQL@ @SORT_SQL@
     </select>
 
