@@ -17,14 +17,14 @@ var {{.Mapper.VarName}} = &{{.Mapper.Name}}{}
 
 {{if .Config.Model.Comment}}// {{.Mapper.Name}} {{.Mapper.Model.Table.Comment}} Mapper{{end}}
 type {{.Mapper.Name}} struct {
-	insertMapper               *UpdateMapper
-	insertsMapper              *UpdateMapper
-	insertAllMapper            *UpdateMapper
-    deleteByIDMapper           *UpdateMapper{{if eq .Mapper.Model.IdCount 1}}
-    deleteByIDsMapper          *UpdateMapper{{end}}
-	updateByIDMapper           *UpdateMapper
-	selectByIDMapper           *SelectMapper
-	selectByModelMapper        *SelectMapper
+	insertMapper        *UpdateMapper
+	insertAllMapper     *UpdateMapper
+    deleteByIDMapper    *UpdateMapper{{if eq .Mapper.Model.IdCount 1}}
+    deleteByIDsMapper   *UpdateMapper{{end}}
+    deleteByFieldMapper *UpdateMapper
+	updateByIDMapper    *UpdateMapper
+	selectByIDMapper    *SelectMapper
+	selectByModelMapper *SelectMapper
 }
 {{if .Mapper.Model.IntId}}{{if lt .Mapper.Model.IdCount 2}}
 // Insert inserts one record
@@ -150,15 +150,7 @@ func (m *{{.Mapper.Name}}) DeleteByIDWithTX(TX *TX, {{range $i,$e := .Mapper.Mod
         return true
     }
     return deleteByIDMapper.Exec() == nil
-}
-
-{{if eq .Mapper.Model.IdCount 1}}{{
-	$id := (index .Mapper.Model.Ids 0)
-}}{{
-	$idName := $id.Name
-}}{{
-	$idType := $id.Type
-}}
+}{{if eq .Mapper.Model.IdCount 1}}{{$id := (index .Mapper.Model.Ids 0)}}{{$idName := $id.Name}}{{$idType := $id.Type}}
 // DeleteByIDs deletes some record by IDs
 func (m *{{.Mapper.Name}}) DeleteByIDs({{ $idName }}s []{{ $idType }}) bool {
 	return m.DeleteByIDsWithTX(nil, {{ $idName }}s)
@@ -179,7 +171,37 @@ func (m *{{.Mapper.Name}}) DeleteByIDsWithTX(TX *TX, IDs []{{ $idType }}) bool {
 		return true
 	}
 	return deleteByIDsMapper.Exec() == nil
-}{{end}}
+}{{end}}{{$mapperName := .Mapper.Name}}{{if gt .Mapper.Model.IdCount 1}}{{range $i,$e := .Mapper.Model.Ids}}
+
+// DeleteBy{{$e.Name}} deletes a record by {{$e.Name}}
+func (m *{{$mapperName}}) DeleteBy{{$e.Name}}({{$e.Name}} {{$e.Type}}) bool {
+	return m.DeleteBy{{$e.Name}}WithTX(nil, {{$e.Name}})
+}
+
+// DeleteBy{{$e.Name}}WithTX deletes a record by {{$e.Name}} with a tx
+func (m *{{$mapperName}}) DeleteBy{{$e.Name}}WithTX(TX *TX, {{$e.Name}} {{$e.Type}}) bool {
+	m.deleteByFieldMapper.Prepare("{{$e.Column.Name}}").Args({{$e.Name}})
+	if TX != nil{
+		TX.Update(m.deleteByFieldMapper)
+		return true
+	}
+	return m.deleteByFieldMapper.Exec() == nil
+}{{end}}{{end}}
+
+// DeleteByField deletes a record by column
+func (m *{{.Mapper.Name}}) DeleteByField(column p.Column, field interface{}) bool {
+	return m.DeleteByFieldWithTX(nil, column, field)
+}
+
+// DeleteByFieldWithTX deletes a record by column with a tx
+func (m *{{.Mapper.Name}}) DeleteByFieldWithTX(TX *TX, column p.Column, field interface{}) bool {
+	m.deleteByFieldMapper.Prepare(column).Args(field)
+	if TX != nil{
+		TX.Update(m.deleteByFieldMapper)
+		return true
+	}
+	return m.deleteByFieldMapper.Exec() == nil
+}
 
 // UpdateByID updates one record by ID
 func (m *{{.Mapper.Name}}) UpdateByID(model *{{.Mapper.Model.Name}}) bool {
@@ -385,12 +407,13 @@ func (m *{{.Mapper.Name}}) generateCondSQL(conds ...p.Cond) (string, []interface
 }
 
 func init() {
-    c.{{.Mapper.Batis}}.AddRaw({{.Mapper.Name}}XML)
+    c.{{.Mapper.Batis}}.AddRaw({{.Mapper.Name}}XML){{$cBatis := .Mapper.Batis}}{{$varName := .Mapper.VarName}}{{$modelName := .Mapper.Model.Name}}
     {
     	{{.Mapper.VarName}}.insertMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "Insert").Update()
     	{{.Mapper.VarName}}.insertAllMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "InsertAll").Update()
     	{{.Mapper.VarName}}.deleteByIDMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "DeleteByID").Update(){{if eq .Mapper.Model.IdCount 1}}
     	{{.Mapper.VarName}}.deleteByIDsMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "DeleteByIDs").Update(){{end}}
+    	{{.Mapper.VarName}}.deleteByFieldMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "DeleteByField").Update()
     	{{.Mapper.VarName}}.updateByIDMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "UpdateByID").Update()
     	{{.Mapper.VarName}}.selectByIDMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectByID").Select()
     	{{.Mapper.VarName}}.selectByModelMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectByModel").Select()
@@ -417,6 +440,10 @@ var {{.Mapper.Name}}XML = `
 		DELETE FROM {{.Mapper.Model.Table.Name}} WHERE {{ (index .Mapper.Model.Ids 0).Name }} IN ({{ "{{ range $i,$e := . }}{{if gt $i 0}}, {{end}}?{{end}}" }})
 	</update>
 	{{end}}
+    <update id="DeleteByField">
+		DELETE FROM {{.Mapper.Model.Table.Name}} WHERE {{ "{{.}}" }} = ?
+	</update>
+	
 	<update id="UpdateByID">
         UPDATE {{.Mapper.Model.Table.Name}} AS t SET {{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}t.{{$e.Column.Name}} = ?{{end}} WHERE {{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}} AND {{end}}t.{{$e.Column.Name}} = ?{{end}}
     </update>
