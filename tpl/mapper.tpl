@@ -37,11 +37,6 @@ func (m *{{.Mapper.Name}}) Inserts(models []*{{.Mapper.Model.Name}}) (bool, []in
     return m.InsertsWithTX(nil, models)
 }
 
-// InsertAll inserts some record
-func (m *{{.Mapper.Name}}) InsertAll(models []*{{.Mapper.Model.Name}}) bool {
-    return m.InsertAllWithTX(nil, models)
-}
-
 // InsertWithTX inserts one record with a tx
 func (m *{{.Mapper.Name}}) InsertWithTX(TX *TX, model *{{.Mapper.Model.Name}}) (bool, int64) {
     m.insertMapper.Args({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}model.{{$e.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}model.{{$e.Name}}{{end}})
@@ -68,22 +63,6 @@ func (m *{{.Mapper.Name}}) InsertsWithTX(TX *TX, models []*{{.Mapper.Model.Name}
 		}
 	}
 	return insertedCount == len(models), insertedIDs
-}
-
-// InsertAllWithTX inserts some record with a tx
-func (m *{{.Mapper.Name}}) InsertAllWithTX(TX *TX, models []*{{.Mapper.Model.Name}}) bool {
-	args := make([]interface{}, 0)
-	for _, model := range models {
-		args = append(args{{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}, model.{{$e.Name}}{{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}, model.{{$e.Name}}{{end}})
-	}
-	m.insertAllMapper.Prepare(models).Args(args...)
-    var err error
-	if TX != nil {
-	   TX.Update(m.insertAllMapper)
-	} else {
-	    err = m.insertAllMapper.Exec()
-	}
-	return err == nil
 }{{end}}{{else}}
 // Insert inserts one record
 func (m *{{.Mapper.Name}}) Insert(model *{{.Mapper.Model.Name}}) bool {
@@ -117,7 +96,7 @@ func (m *{{.Mapper.Name}}) InsertsWithTX(TX *TX, models []*{{.Mapper.Model.Name}
 		}
 	}
 	return insertedCount == len(models)
-}
+}{{end}}
 
 // InsertAll inserts some record
 func (m *{{.Mapper.Name}}) InsertAll(models []*{{.Mapper.Model.Name}}) bool {
@@ -126,16 +105,19 @@ func (m *{{.Mapper.Name}}) InsertAll(models []*{{.Mapper.Model.Name}}) bool {
 
 // InsertAllWithTX inserts some record with a tx
 func (m *{{.Mapper.Name}}) InsertAllWithTX(TX *TX, models []*{{.Mapper.Model.Name}}) bool {
- 	insertAllMapper := m.insertAllMapper
-    insertAllMapper.Prepare(models)
+	args := make([]interface{}, 0)
+	for _, model := range models {
+		args = append(args{{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}, model.{{$e.Name}}{{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}, model.{{$e.Name}}{{end}})
+	}
+	m.insertAllMapper.Prepare(models).Args(args...)
     var err error
 	if TX != nil {
-	   TX.Update(insertAllMapper)
+	   TX.Update(m.insertAllMapper)
 	} else {
-	    err = insertAllMapper.Exec()
+	    err = m.insertAllMapper.Exec()
 	}
 	return err == nil
-}{{end}}
+}
 
 // DeleteByID deletes one record by ID
 func (m *{{.Mapper.Name}}) DeleteByID({{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}},{{end}}{{$e.Name}} {{$e.Type}}{{end}}) bool {
