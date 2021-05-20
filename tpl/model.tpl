@@ -11,7 +11,7 @@ import (
 {{end}}
 )
 
-{{if .Config.Model.Comment}}// {{.Model.Name}} {{.Model.Table.Comment}}{{end}}
+{{if .Config.Model.Comment}}// {{.Model.Name}} struct {{.Model.Table.Comment}}{{end}}
 type {{.Model.Name}} struct {
     {{range $i, $e := .Model.Ids}}
     {{if $e.Comment}}// {{$e.Name}} {{$e.Column.Comment}}{{end}}
