@@ -277,6 +277,64 @@ func (m *{{.Mapper.Name}}) SelectByCondAndSort(conds []p.Cond, sorts ...p.Sort) 
 	return newList
 }
 
+// SelectOneMapByModel selects one map by model
+func (m *{{.Mapper.Name}}) SelectOneMapByModel(model *{{.Mapper.Model.Name}}) map[string]interface{} {
+	return m.SelectOneMapByModelAndSort(model, nil)
+}
+
+// SelectOneMapByModelAndSort selects one map by model with sort
+func (m *{{.Mapper.Name}}) SelectOneMapByModelAndSort(model *{{.Mapper.Model.Name}}, sorts ...p.Sort) map[string]interface{} {
+	list := m.SelectMapByModelAndSort(model, sorts...)
+	if len(list) > 0 {
+		return list[0]
+	}
+	return nil
+}
+
+// SelectOneMapByCond selects one map by cond
+func (m *{{.Mapper.Name}}) SelectOneMapByCond(conds ...p.Cond) map[string]interface{} {
+	return m.SelectOneMapByCondAndSort(conds, nil)
+}
+
+// SelectOneMapByCondAndSort selects one map by cond with sort
+func (m *{{.Mapper.Name}}) SelectOneMapByCondAndSort(conds []p.Cond, sorts ...p.Sort) map[string]interface{} {
+	list := m.SelectMapByCondAndSort(conds, sorts...)
+	if len(list) > 0 {
+		return list[0]
+	}
+	return nil
+}
+
+// SelectMapByModel selects map by model
+func (m *{{.Mapper.Name}}) SelectMapByModel(model *{{.Mapper.Model.Name}}) []map[string]interface{} {
+	return m.SelectMapByModelAndSort(model, nil)
+}
+
+// SelectMapByModelAndSort selects map by model with sort
+func (m *{{.Mapper.Name}}) SelectMapByModelAndSort(model *{{.Mapper.Model.Name}}, sorts ...p.Sort) []map[string]interface{} {
+	whereSQL, params := m.generateWhereSQL(model)
+	sortSQL := m.generateSortSQL(sorts...)
+	return m.selectByModelMapper.Params(
+		NewParam("WHERE_SQL", whereSQL),
+		NewParam("SORT_SQL", sortSQL),
+	).Args(params...).Exec().MapList()
+}
+
+// SelectMapByCond selects map by cond
+func (m *{{.Mapper.Name}}) SelectMapByCond(conds ...p.Cond) []map[string]interface{} {
+	return m.SelectMapByCondAndSort(conds, nil)
+}
+
+// SelectMapByCondAndSort selects map by cond with sort
+func (m *{{.Mapper.Name}}) SelectMapByCondAndSort(conds []p.Cond, sorts ...p.Sort) []map[string]interface{} {
+	whereSQL, params := m.generateCondSQL(conds...)
+	sortSQL := m.generateSortSQL(sorts...)
+	return m.selectByModelMapper.Params(
+		NewParam("WHERE_SQL", whereSQL),
+		NewParam("SORT_SQL", sortSQL),
+	).Args(params...).Exec().MapList()
+}
+
 // SelectPageByModel selects page by model
 func (m *{{.Mapper.Name}}) SelectPageByModel(model *{{.Mapper.Model.Name}}, offset, size int) *Page {
 	return m.SelectPageByModelAndSort(model, offset, size, nil)

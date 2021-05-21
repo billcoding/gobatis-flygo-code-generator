@@ -6,10 +6,10 @@ package {{.Config.Model.PKG}}
 {{if .Config.Global.Website}}// @repo {{.Config.Global.WebsiteContent}}{{end}}
 
 import (
+	"encoding/json"
     p "github.com/billcoding/gobatis/predicate"{{if .Model.ImportTime}}
     "time"
-{{end}}
-)
+{{end}})
 
 {{if .Config.Model.Comment}}// {{.Model.Name}} struct {{.Model.Table.Comment}}{{end}}
 type {{.Model.Name}} struct {
@@ -44,6 +44,35 @@ func Default{{.Model.Name}}({{if not .Model.IntId}}{{range $i,$e := .Model.Ids}}
     m.{{$e.Name}} = {{$e.Default}}
     {{end}}
     return m
+}
+
+// FieldMap model to map named with fields
+func (model *{{.Model.Name}}) FieldMap() map[string]interface{} {
+	return map[string]interface{}{
+	    {{range $i, $e := .Model.Ids}}
+        "{{$e.Name}}": model.{{$e.Name}},
+        {{end}}{{range $i, $e := .Model.Fields}}
+        "{{$e.Name}}": model.{{$e.Name}},
+        {{end}}}
+}
+
+// ColumnMap model to map named with columns
+func (model *{{.Model.Name}}) ColumnMap() map[string]interface{} {
+	return map[string]interface{}{
+	    {{range $i, $e := .Model.Ids}}
+        "{{$e.Column.Name}}": model.{{$e.Name}},
+        {{end}}{{range $i, $e := .Model.Fields}}
+        "{{$e.Column.Name}}": model.{{$e.Name}},
+        {{end}}}
+}
+
+// JSON model to json
+func (model *{{.Model.Name}}) JSON() string {
+	bytes, err := json.Marshal(model)
+	if err != nil {
+		panic(err)
+	}
+	return string(bytes)
 }
 
 var {{.Model.Name}}Columns = &struct{ {{range $i, $e := .Model.Ids}}
