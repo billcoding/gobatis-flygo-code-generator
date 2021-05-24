@@ -63,7 +63,8 @@ func (model *{{.Model.Name}}) ColumnMap() map[string]interface{} {
         "{{$e.Column.Name}}": model.{{$e.Name}},
         {{end}}{{range $i, $e := .Model.Fields}}
         "{{$e.Column.Name}}": model.{{$e.Name}},
-        {{end}}}
+        {{end}}
+    }
 }
 
 // JSON model to json
