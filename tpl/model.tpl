@@ -53,7 +53,8 @@ func (model *{{.Model.Name}}) FieldMap() map[string]interface{} {
         "{{$e.Name}}": model.{{$e.Name}},
         {{end}}{{range $i, $e := .Model.Fields}}
         "{{$e.Name}}": model.{{$e.Name}},
-        {{end}}}
+        {{end}}
+    }
 }
 
 // ColumnMap model to map named with columns
@@ -87,4 +88,5 @@ var {{.Model.Name}}Columns = &struct{ {{range $i, $e := .Model.Ids}}
     {{$e.Name}} : "{{$e.Column.Name}}",
     {{end}}{{range $i, $e := .Model.Fields}}
     {{$e.Name}} : "{{$e.Column.Name}}",
-{{end}} }
+{{end}}
+}
