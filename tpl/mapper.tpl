@@ -246,10 +246,10 @@ func (m *{{.Mapper.Name}}) SelectByModel(model *{{.Mapper.Model.Name}}) []*{{.Ma
 func (m *{{.Mapper.Name}}) SelectByModelAndSort(model *{{.Mapper.Model.Name}}, sorts ...p.Sort) []*{{.Mapper.Model.Name}} {
 	whereSQL, params := m.generateWhereSQL(model)
 	sortSQL := m.generateSortSQL(sorts...)
-	list := m.selectByModelMapper.Params(
-		NewParam("WHERE_SQL", whereSQL),
-		NewParam("SORT_SQL", sortSQL),
-	).Args(params...).Exec().List(new({{.Mapper.Model.Name}}))
+	list := m.selectByModelMapper.Prepare(map[string]string{
+		"WHERE_SQL": whereSQL,
+		"SORT_SQL":  sortSQL,
+	}).Args(params...).Exec().List(new({{.Mapper.Model.Name}}))
 	newList := make([]*{{.Mapper.Model.Name}}, len(list))
 	for i := range list {
 		newList[i] = list[i].(*{{.Mapper.Model.Name}})
@@ -266,10 +266,10 @@ func (m *{{.Mapper.Name}}) SelectByCond(conds ...p.Cond) []*{{.Mapper.Model.Name
 func (m *{{.Mapper.Name}}) SelectByCondAndSort(conds []p.Cond, sorts ...p.Sort) []*{{.Mapper.Model.Name}} {
 	whereSQL, params := m.generateCondSQL(conds...)
 	sortSQL := m.generateSortSQL(sorts...)
-	list := m.selectByModelMapper.Params(
-		NewParam("WHERE_SQL", whereSQL),
-		NewParam("SORT_SQL", sortSQL),
-	).Args(params...).Exec().List(new({{.Mapper.Model.Name}}))
+	list := m.selectByModelMapper.Prepare(map[string]string{
+		"WHERE_SQL": whereSQL,
+		"SORT_SQL":  sortSQL,
+	}).Args(params...).Exec().List(new({{.Mapper.Model.Name}}))
 	newList := make([]*{{.Mapper.Model.Name}}, len(list))
 	for i := range list {
 		newList[i] = list[i].(*{{.Mapper.Model.Name}})
@@ -314,10 +314,10 @@ func (m *{{.Mapper.Name}}) SelectMapByModel(model *{{.Mapper.Model.Name}}) []map
 func (m *{{.Mapper.Name}}) SelectMapByModelAndSort(model *{{.Mapper.Model.Name}}, sorts ...p.Sort) []map[string]interface{} {
 	whereSQL, params := m.generateWhereSQL(model)
 	sortSQL := m.generateSortSQL(sorts...)
-	return m.selectByModelMapper.Params(
-		NewParam("WHERE_SQL", whereSQL),
-		NewParam("SORT_SQL", sortSQL),
-	).Args(params...).Exec().MapList()
+	return m.selectByModelMapper.Prepare(map[string]string{
+		"WHERE_SQL": whereSQL,
+		"SORT_SQL":  sortSQL,
+	}).Args(params...).Exec().MapList()
 }
 
 // SelectMapByCond selects map by cond
@@ -329,10 +329,10 @@ func (m *{{.Mapper.Name}}) SelectMapByCond(conds ...p.Cond) []map[string]interfa
 func (m *{{.Mapper.Name}}) SelectMapByCondAndSort(conds []p.Cond, sorts ...p.Sort) []map[string]interface{} {
 	whereSQL, params := m.generateCondSQL(conds...)
 	sortSQL := m.generateSortSQL(sorts...)
-	return m.selectByModelMapper.Params(
-		NewParam("WHERE_SQL", whereSQL),
-		NewParam("SORT_SQL", sortSQL),
-	).Args(params...).Exec().MapList()
+	return m.selectByModelMapper.Prepare(map[string]string{
+		"WHERE_SQL": whereSQL,
+		"SORT_SQL":  sortSQL,
+	}).Args(params...).Exec().MapList()
 }
 
 // SelectPageByModel selects page by model
@@ -344,10 +344,10 @@ func (m *{{.Mapper.Name}}) SelectPageByModel(model *{{.Mapper.Model.Name}}, offs
 func (m *{{.Mapper.Name}}) SelectPageByModelAndSort(model *{{.Mapper.Model.Name}}, offset, size int, sorts ...p.Sort) *Page {
 	whereSQL, params := m.generateWhereSQL(model)
 	sortSQL := m.generateSortSQL(sorts...)
-	return m.selectByModelMapper.Params(
-		NewParam("WHERE_SQL", whereSQL),
-		NewParam("SORT_SQL", sortSQL),
-	).Args(params...).Page(new({{.Mapper.Model.Name}}), offset, size)
+	return m.selectByModelMapper.Prepare(map[string]string{
+		"WHERE_SQL": whereSQL,
+		"SORT_SQL":  sortSQL,
+	}).Args(params...).Page(new({{.Mapper.Model.Name}}), offset, size)
 }
 
 // SelectPageByCond selects page by cond
@@ -359,10 +359,10 @@ func (m *{{.Mapper.Name}}) SelectPageByCond(conds []p.Cond, offset, size int) *P
 func (m *{{.Mapper.Name}}) SelectPageByCondAndSort(conds []p.Cond, offset, size int, sorts ...p.Sort) *Page {
 	whereSQL, params := m.generateCondSQL(conds...)
 	sortSQL := m.generateSortSQL(sorts...)
-	return m.selectByModelMapper.Params(
-		NewParam("WHERE_SQL", whereSQL),
-		NewParam("SORT_SQL", sortSQL),
-	).Args(params...).Page(new({{.Mapper.Model.Name}}), offset, size)
+	return m.selectByModelMapper.Prepare(map[string]string{
+		"WHERE_SQL": whereSQL,
+		"SORT_SQL":  sortSQL,
+	}).Args(params...).Page(new({{.Mapper.Model.Name}}), offset, size)
 }
 
 // SelectPageMapByModel selects page map by model
@@ -374,10 +374,10 @@ func (m *{{.Mapper.Name}}) SelectPageMapByModel(model *{{.Mapper.Model.Name}}, o
 func (m *{{.Mapper.Name}}) SelectPageMapByModelAndSort(model *{{.Mapper.Model.Name}}, offset, size int, sorts ...p.Sort) *PageMap {
 	whereSQL, params := m.generateWhereSQL(model)
 	sortSQL := m.generateSortSQL(sorts...)
-	return m.selectByModelMapper.Params(
-		NewParam("WHERE_SQL", whereSQL),
-		NewParam("SORT_SQL", sortSQL),
-	).Args(params...).PageMap(offset, size)
+	return m.selectByModelMapper.Prepare(map[string]string{
+		"WHERE_SQL": whereSQL,
+		"SORT_SQL":  sortSQL,
+	}).Args(params...).PageMap(offset, size)
 }
 
 // SelectPageMapByCond selects page map by cond
@@ -389,10 +389,10 @@ func (m *{{.Mapper.Name}}) SelectPageMapByCond(conds []p.Cond, offset, size int)
 func (m *{{.Mapper.Name}}) SelectPageMapByCondAndSort(conds []p.Cond, offset, size int, sorts ...p.Sort) *PageMap {
 	whereSQL, params := m.generateCondSQL(conds...)
 	sortSQL := m.generateSortSQL(sorts...)
-	return m.selectByModelMapper.Params(
-		NewParam("WHERE_SQL", whereSQL),
-		NewParam("SORT_SQL", sortSQL),
-	).Args(params...).PageMap(offset, size)
+	return m.selectByModelMapper.Prepare(map[string]string{
+		"WHERE_SQL": whereSQL,
+		"SORT_SQL":  sortSQL,
+	}).Args(params...).PageMap(offset, size)
 }
 
 // generateWhereSQL
@@ -493,7 +493,7 @@ var {{.Mapper.Name}}XML = `
     </select>
 
     <select id="SelectByModel">
-        SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE 1 = 1 @WHERE_SQL@ @SORT_SQL@
+        SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE 1 = 1 {{ "{{.WHERE_SQL}}" }} {{ "{{.SORT_SQL}}" }}
     </select>
 
 </batis-mapper>`
