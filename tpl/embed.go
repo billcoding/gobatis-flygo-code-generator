@@ -2,15 +2,17 @@ package tpl
 
 import "embed"
 
-//go:embed model.tpl mapper.tpl config.tpl controller.tpl service.tpl
+//go:embed model.tpl mapper.tpl xml.tpl config.tpl controller.tpl service.tpl
 var FS embed.FS
 var modelTpl = `model.tpl`
 var mapperTpl = `mapper.tpl`
+var xmlTpl = `xml.tpl`
 var configTpl = `config.tpl`
 var controllerTpl = `controller.tpl`
 var serviceTpl = `service.tpl`
 var modelTplContent = ""
 var mapperTplContent = ""
+var xmlTplContent = ""
 var configTplContent = ""
 var controllerTplContent = ""
 var serviceTplContent = ""
@@ -35,6 +37,17 @@ func MapperTpl() string {
 		mapperTplContent = string(file)
 	}
 	return mapperTplContent
+}
+
+func XMLTpl() string {
+	if xmlTplContent == "" {
+		file, err := FS.ReadFile(xmlTpl)
+		if err != nil {
+			panic(err)
+		}
+		xmlTplContent = string(file)
+	}
+	return xmlTplContent
 }
 
 func ConfigTpl() string {

@@ -18,6 +18,7 @@ type MapperGenerator struct {
 	C      *Configuration
 	Mapper *Mapper
 	Body   string
+	XML    string
 }
 
 func (mg *MapperGenerator) Init(e *Model) {
@@ -44,6 +45,13 @@ func (mg *MapperGenerator) generateBody() {
 			"Date": time.Now().Format(mg.C.Global.DateLayout),
 		},
 	})
+	mg.XML = ExecuteTpl(XMLTpl(), map[string]interface{}{
+		"Mapper": mg.Mapper,
+		"Config": mg.C,
+		"Extra": map[string]interface{}{
+			"Date": time.Now().Format(mg.C.Global.DateLayout),
+		},
+	})
 	if mg.C.Verbose {
 		mapperGeneratorLogger.Println(fmt.Sprintf("[generateBody] for model[%s]", mg.Mapper.Model.Name))
 	}
@@ -58,7 +66,22 @@ func (mg *MapperGenerator) generateFile() {
 	dir := filepath.Dir(fileName)
 	_ = os.MkdirAll(dir, 0700)
 	_ = os.WriteFile(fileName, []byte(mg.Body), 0700)
+
 	if mg.C.Verbose {
 		mapperGeneratorLogger.Println(fmt.Sprintf("[generateFile] for model[%s], saved as [%s]", mg.Mapper.Model.Name, fileName))
+	}
+
+	paths = make([]string, 0)
+	paths = append(paths, mg.C.OutputDir)
+	paths = append(paths, mg.Mapper.PKG)
+	paths = append(paths, "xml")
+	paths = append(paths, mg.Mapper.FileName)
+	fileName = filepath.Join(paths...) + ".xml"
+	dir = filepath.Dir(fileName)
+	_ = os.MkdirAll(dir, 0700)
+	_ = os.WriteFile(fileName, []byte(mg.XML), 0700)
+
+	if mg.C.Verbose {
+		mapperGeneratorLogger.Println(fmt.Sprintf("[generateXMLFile] for model[%s], saved as [%s]", mg.Mapper.Model.Name, fileName))
 	}
 }

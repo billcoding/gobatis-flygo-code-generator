@@ -6,10 +6,11 @@ package {{.Config.Mapper.PKG}}
 {{if .Config.Global.Website}}// @repo {{.Config.Global.WebsiteContent}}{{end}}
 
 import (
+	"embed"
     . "github.com/billcoding/gobatis"
     p "github.com/billcoding/gobatis/predicate"
-    . "{{.Config.Module}}/{{.Mapper.Model.PKG}}"
     c "{{.Config.Module}}/{{.Config.Config.PKG}}"
+    . "{{.Config.Module}}/{{.Mapper.Model.PKG}}"
     "strings"
 )
 
@@ -17,14 +18,16 @@ var {{.Mapper.VarName}} = &{{.Mapper.Name}}{}
 
 {{if .Config.Model.Comment}}// {{.Mapper.Name}} {{.Mapper.Model.Table.Comment}} Mapper{{end}}
 type {{.Mapper.Name}} struct {
-	insertMapper        *UpdateMapper
-	insertAllMapper     *UpdateMapper
-    deleteByIDMapper    *UpdateMapper{{if eq .Mapper.Model.IdCount 1}}
-    deleteByIDsMapper   *UpdateMapper{{end}}
-    deleteByFieldMapper *UpdateMapper
-	updateByIDMapper    *UpdateMapper
-	selectByIDMapper    *SelectMapper
-	selectByModelMapper *SelectMapper
+	insertMapper             *UpdateMapper
+	insertAllMapper          *UpdateMapper
+    deleteByIDMapper         *UpdateMapper{{if eq .Mapper.Model.IdCount 1}}
+    deleteByIDsMapper        *UpdateMapper{{end}}
+    deleteByFieldMapper      *UpdateMapper
+    deleteByCondMapper       *UpdateMapper
+	updateByIDMapper         *UpdateMapper
+	selectByIDMapper         *SelectMapper
+	selectByModelMapper      *SelectMapper
+	selectCountByModelMapper *SelectMapper
 }
 {{if .Mapper.Model.IntId}}{{if lt .Mapper.Model.IdCount 2}}
 // Insert inserts one record
@@ -185,6 +188,38 @@ func (m *{{.Mapper.Name}}) DeleteByFieldWithTX(TX *TX, column p.Column, field in
 	return m.deleteByFieldMapper.Exec() == nil
 }
 
+// DeleteByModel deletes some record by model
+func (m *{{.Mapper.Name}}) DeleteByModel(model *{{.Mapper.Model.Name}}) bool {
+	return m.DeleteByModelWithTX(nil, model)
+}
+
+// DeleteByModelWithTX deletes some record by model with a tx
+func (m *{{.Mapper.Name}}) DeleteByModelWithTX(TX *TX, model *{{.Mapper.Model.Name}}) bool {
+	whereSQL, params := m.generateWhereSQL(model, false)
+	m.deleteByCondMapper.Prepare(whereSQL).Args(params...)
+	if TX != nil{
+		TX.Update(m.deleteByCondMapper)
+		return true
+	}
+	return m.deleteByCondMapper.Exec() == nil
+}
+
+// DeleteByCond deletes some record by cs
+func (m *{{.Mapper.Name}}) DeleteByCond(cs ...p.Cond) bool {
+	return m.DeleteByCondWithTX(nil, cs...)
+}
+
+// DeleteByCondWithTX deletes some record by cs with a tx
+func (m *{{.Mapper.Name}}) DeleteByCondWithTX(TX *TX, cs ...p.Cond) bool {
+	condSQL, params := m.generateCondSQL(cs...)
+	m.deleteByCondMapper.Prepare(condSQL).Args(params...)
+	if TX != nil{
+		TX.Update(m.deleteByCondMapper)
+		return true
+	}
+	return m.deleteByCondMapper.Exec() == nil
+}
+
 // UpdateByID updates one record by ID
 func (m *{{.Mapper.Name}}) UpdateByID(model *{{.Mapper.Model.Name}}) bool {
     return m.UpdateByIDWithTX(nil, model)
@@ -224,13 +259,13 @@ func (m *{{.Mapper.Name}}) SelectOneByModelAndSort(model *{{.Mapper.Model.Name}}
 }
 
 // SelectOneByCond selects one by cond
-func (m *{{.Mapper.Name}}) SelectOneByCond(conds ...p.Cond) *{{.Mapper.Model.Name}} {
-	return m.SelectOneByCondAndSort(conds, nil)
+func (m *{{.Mapper.Name}}) SelectOneByCond(cs ...p.Cond) *{{.Mapper.Model.Name}} {
+	return m.SelectOneByCondAndSort(cs, nil)
 }
 
 // SelectOneByCondAndSort selects one by cond with sort
-func (m *{{.Mapper.Name}}) SelectOneByCondAndSort(conds []p.Cond, sorts ...p.Sort) *{{.Mapper.Model.Name}} {
-	list := m.SelectByCondAndSort(conds, sorts...)
+func (m *{{.Mapper.Name}}) SelectOneByCondAndSort(cs []p.Cond, sorts ...p.Sort) *{{.Mapper.Model.Name}} {
+	list := m.SelectByCondAndSort(cs, sorts...)
 	if len(list) > 0 {
 		return list[0]
 	}
@@ -244,7 +279,7 @@ func (m *{{.Mapper.Name}}) SelectByModel(model *{{.Mapper.Model.Name}}) []*{{.Ma
 
 // SelectByModelAndSort selects by model with sort
 func (m *{{.Mapper.Name}}) SelectByModelAndSort(model *{{.Mapper.Model.Name}}, sorts ...p.Sort) []*{{.Mapper.Model.Name}} {
-	whereSQL, params := m.generateWhereSQL(model)
+	whereSQL, params := m.generateWhereSQL(model, true)
 	sortSQL := m.generateSortSQL(sorts...)
 	list := m.selectByModelMapper.Prepare(map[string]string{
 		"WHERE_SQL": whereSQL,
@@ -258,13 +293,13 @@ func (m *{{.Mapper.Name}}) SelectByModelAndSort(model *{{.Mapper.Model.Name}}, s
 }
 
 // SelectByCond selects by cond
-func (m *{{.Mapper.Name}}) SelectByCond(conds ...p.Cond) []*{{.Mapper.Model.Name}} {
-	return m.SelectByCondAndSort(conds, nil)
+func (m *{{.Mapper.Name}}) SelectByCond(cs ...p.Cond) []*{{.Mapper.Model.Name}} {
+	return m.SelectByCondAndSort(cs, nil)
 }
 
 // SelectByCondAndSort selects by cond with sort
-func (m *{{.Mapper.Name}}) SelectByCondAndSort(conds []p.Cond, sorts ...p.Sort) []*{{.Mapper.Model.Name}} {
-	whereSQL, params := m.generateCondSQL(conds...)
+func (m *{{.Mapper.Name}}) SelectByCondAndSort(cs []p.Cond, sorts ...p.Sort) []*{{.Mapper.Model.Name}} {
+	whereSQL, params := m.generateCondSQL(cs...)
 	sortSQL := m.generateSortSQL(sorts...)
 	list := m.selectByModelMapper.Prepare(map[string]string{
 		"WHERE_SQL": whereSQL,
@@ -292,13 +327,13 @@ func (m *{{.Mapper.Name}}) SelectOneMapByModelAndSort(model *{{.Mapper.Model.Nam
 }
 
 // SelectOneMapByCond selects one map by cond
-func (m *{{.Mapper.Name}}) SelectOneMapByCond(conds ...p.Cond) map[string]interface{} {
-	return m.SelectOneMapByCondAndSort(conds, nil)
+func (m *{{.Mapper.Name}}) SelectOneMapByCond(cs ...p.Cond) map[string]interface{} {
+	return m.SelectOneMapByCondAndSort(cs, nil)
 }
 
 // SelectOneMapByCondAndSort selects one map by cond with sort
-func (m *{{.Mapper.Name}}) SelectOneMapByCondAndSort(conds []p.Cond, sorts ...p.Sort) map[string]interface{} {
-	list := m.SelectMapByCondAndSort(conds, sorts...)
+func (m *{{.Mapper.Name}}) SelectOneMapByCondAndSort(cs []p.Cond, sorts ...p.Sort) map[string]interface{} {
+	list := m.SelectMapByCondAndSort(cs, sorts...)
 	if len(list) > 0 {
 		return list[0]
 	}
@@ -312,7 +347,7 @@ func (m *{{.Mapper.Name}}) SelectMapByModel(model *{{.Mapper.Model.Name}}) []map
 
 // SelectMapByModelAndSort selects map by model with sort
 func (m *{{.Mapper.Name}}) SelectMapByModelAndSort(model *{{.Mapper.Model.Name}}, sorts ...p.Sort) []map[string]interface{} {
-	whereSQL, params := m.generateWhereSQL(model)
+	whereSQL, params := m.generateWhereSQL(model, true)
 	sortSQL := m.generateSortSQL(sorts...)
 	return m.selectByModelMapper.Prepare(map[string]string{
 		"WHERE_SQL": whereSQL,
@@ -321,13 +356,13 @@ func (m *{{.Mapper.Name}}) SelectMapByModelAndSort(model *{{.Mapper.Model.Name}}
 }
 
 // SelectMapByCond selects map by cond
-func (m *{{.Mapper.Name}}) SelectMapByCond(conds ...p.Cond) []map[string]interface{} {
-	return m.SelectMapByCondAndSort(conds, nil)
+func (m *{{.Mapper.Name}}) SelectMapByCond(cs ...p.Cond) []map[string]interface{} {
+	return m.SelectMapByCondAndSort(cs, nil)
 }
 
 // SelectMapByCondAndSort selects map by cond with sort
-func (m *{{.Mapper.Name}}) SelectMapByCondAndSort(conds []p.Cond, sorts ...p.Sort) []map[string]interface{} {
-	whereSQL, params := m.generateCondSQL(conds...)
+func (m *{{.Mapper.Name}}) SelectMapByCondAndSort(cs []p.Cond, sorts ...p.Sort) []map[string]interface{} {
+	whereSQL, params := m.generateCondSQL(cs...)
 	sortSQL := m.generateSortSQL(sorts...)
 	return m.selectByModelMapper.Prepare(map[string]string{
 		"WHERE_SQL": whereSQL,
@@ -342,7 +377,7 @@ func (m *{{.Mapper.Name}}) SelectPageByModel(model *{{.Mapper.Model.Name}}, offs
 
 // SelectPageByModelAndSort selects page by model with sort
 func (m *{{.Mapper.Name}}) SelectPageByModelAndSort(model *{{.Mapper.Model.Name}}, offset, size int, sorts ...p.Sort) *Page {
-	whereSQL, params := m.generateWhereSQL(model)
+	whereSQL, params := m.generateWhereSQL(model, true)
 	sortSQL := m.generateSortSQL(sorts...)
 	return m.selectByModelMapper.Prepare(map[string]string{
 		"WHERE_SQL": whereSQL,
@@ -351,13 +386,13 @@ func (m *{{.Mapper.Name}}) SelectPageByModelAndSort(model *{{.Mapper.Model.Name}
 }
 
 // SelectPageByCond selects page by cond
-func (m *{{.Mapper.Name}}) SelectPageByCond(conds []p.Cond, offset, size int) *Page {
-	return m.SelectPageByCondAndSort(conds, offset, size, nil)
+func (m *{{.Mapper.Name}}) SelectPageByCond(cs []p.Cond, offset, size int) *Page {
+	return m.SelectPageByCondAndSort(cs, offset, size, nil)
 }
 
 // SelectPageByCondAndSort selects page by cond with sort
-func (m *{{.Mapper.Name}}) SelectPageByCondAndSort(conds []p.Cond, offset, size int, sorts ...p.Sort) *Page {
-	whereSQL, params := m.generateCondSQL(conds...)
+func (m *{{.Mapper.Name}}) SelectPageByCondAndSort(cs []p.Cond, offset, size int, sorts ...p.Sort) *Page {
+	whereSQL, params := m.generateCondSQL(cs...)
 	sortSQL := m.generateSortSQL(sorts...)
 	return m.selectByModelMapper.Prepare(map[string]string{
 		"WHERE_SQL": whereSQL,
@@ -372,7 +407,7 @@ func (m *{{.Mapper.Name}}) SelectPageMapByModel(model *{{.Mapper.Model.Name}}, o
 
 // SelectPageMapByModelAndSort selects page map by model with sort
 func (m *{{.Mapper.Name}}) SelectPageMapByModelAndSort(model *{{.Mapper.Model.Name}}, offset, size int, sorts ...p.Sort) *PageMap {
-	whereSQL, params := m.generateWhereSQL(model)
+	whereSQL, params := m.generateWhereSQL(model, true)
 	sortSQL := m.generateSortSQL(sorts...)
 	return m.selectByModelMapper.Prepare(map[string]string{
 		"WHERE_SQL": whereSQL,
@@ -381,13 +416,13 @@ func (m *{{.Mapper.Name}}) SelectPageMapByModelAndSort(model *{{.Mapper.Model.Na
 }
 
 // SelectPageMapByCond selects page map by cond
-func (m *{{.Mapper.Name}}) SelectPageMapByCond(conds []p.Cond, offset, size int) *PageMap {
-	return m.SelectPageMapByCondAndSort(conds, offset, size, nil)
+func (m *{{.Mapper.Name}}) SelectPageMapByCond(cs []p.Cond, offset, size int) *PageMap {
+	return m.SelectPageMapByCondAndSort(cs, offset, size, nil)
 }
 
 // SelectPageMapByCondAndSort selects page map by cond with sort
-func (m *{{.Mapper.Name}}) SelectPageMapByCondAndSort(conds []p.Cond, offset, size int, sorts ...p.Sort) *PageMap {
-	whereSQL, params := m.generateCondSQL(conds...)
+func (m *{{.Mapper.Name}}) SelectPageMapByCondAndSort(cs []p.Cond, offset, size int, sorts ...p.Sort) *PageMap {
+	whereSQL, params := m.generateCondSQL(cs...)
 	sortSQL := m.generateSortSQL(sorts...)
 	return m.selectByModelMapper.Prepare(map[string]string{
 		"WHERE_SQL": whereSQL,
@@ -395,8 +430,20 @@ func (m *{{.Mapper.Name}}) SelectPageMapByCondAndSort(conds []p.Cond, offset, si
 	}).Args(params...).PageMap(offset, size)
 }
 
+// SelectCountByModel selects count by model
+func (m *{{.Mapper.Name}}) SelectCountByModel(model *{{.Mapper.Model.Name}}) int64 {
+	whereSQL, params := m.generateWhereSQL(model, true)
+	return m.selectCountByModelMapper.Prepare(whereSQL).Args(params...).Exec().SingleInt()
+}
+
+// SelectCountByCond selects count by cond
+func (m *{{.Mapper.Name}}) SelectCountByCond(cs ...p.Cond) int64 {
+	whereSQL, params := m.generateCondSQL(cs...)
+	return m.selectCountByModelMapper.Prepare(whereSQL).Args(params...).Exec().SingleInt()
+}
+
 // generateWhereSQL
-func (m *{{.Mapper.Name}}) generateWhereSQL(model *{{.Mapper.Model.Name}}) (string, []interface{}) {
+func (m *{{.Mapper.Name}}) generateWhereSQL(model *{{.Mapper.Model.Name}}, prependAnd bool) (string, []interface{}) {
     params := make([]interface{}, 0)
  	wheres := make([]string, 0)
  	if model != nil {
@@ -415,7 +462,11 @@ func (m *{{.Mapper.Name}}) generateWhereSQL(model *{{.Mapper.Model.Name}}) (stri
     if len(wheres) <= 0 {
         return "", params
     }
- 	return " AND " + strings.Join(wheres, " AND "), params
+    prependSQL := ""
+    if prependAnd {
+    	prependSQL = " AND " 
+    }
+ 	return prependSQL + strings.Join(wheres, " AND "), params
 }
 
 // generateSortSQL
@@ -433,10 +484,10 @@ func (m *{{.Mapper.Name}}) generateSortSQL(sorts ...p.Sort) string {
 }
 
 // generateCondSQL generate Cond SQL for Query
-func (m *{{.Mapper.Name}}) generateCondSQL(conds ...p.Cond) (string, []interface{}) {
+func (m *{{.Mapper.Name}}) generateCondSQL(cs ...p.Cond) (string, []interface{}) {
 	params := make([]interface{}, 0)
 	condSQLs := make([]string, 0)
-	for _, cond := range conds {
+	for _, cond := range cs {
 	    if cond != nil {
             condSQL, condParams := cond.SQL()
             condSQLs = append(condSQLs, condSQL)
@@ -446,54 +497,22 @@ func (m *{{.Mapper.Name}}) generateCondSQL(conds ...p.Cond) (string, []interface
 	return strings.Join(condSQLs, " "), params
 }
 
+
+//go:embed xml/{{.Mapper.FileName}}.xml
+var {{.Mapper.Name}}FS embed.FS
+
 func init() {
-    c.{{.Mapper.Batis}}.AddRaw({{.Mapper.Name}}XML){{$cBatis := .Mapper.Batis}}{{$varName := .Mapper.VarName}}{{$modelName := .Mapper.Model.Name}}
+    c.{{.Mapper.Batis}}.AddFS(&{{.Mapper.Name}}FS, "xml/{{.Mapper.FileName}}.xml"){{$cBatis := .Mapper.Batis}}{{$varName := .Mapper.VarName}}{{$modelName := .Mapper.Model.Name}}
     {
     	{{.Mapper.VarName}}.insertMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "Insert").Update()
     	{{.Mapper.VarName}}.insertAllMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "InsertAll").Update()
     	{{.Mapper.VarName}}.deleteByIDMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "DeleteByID").Update(){{if eq .Mapper.Model.IdCount 1}}
     	{{.Mapper.VarName}}.deleteByIDsMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "DeleteByIDs").Update(){{end}}
     	{{.Mapper.VarName}}.deleteByFieldMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "DeleteByField").Update()
+    	{{.Mapper.VarName}}.deleteByCondMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "DeleteByCond").Update()
     	{{.Mapper.VarName}}.updateByIDMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "UpdateByID").Update()
     	{{.Mapper.VarName}}.selectByIDMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectByID").Select()
     	{{.Mapper.VarName}}.selectByModelMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectByModel").Select()
+    	{{.Mapper.VarName}}.selectCountByModelMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "SelectCountByModel").Select()
     }
 }
-
-var {{.Mapper.Name}}XML = `
-<?xml version="1.0" encoding="UTF-8"?>
-<batis-mapper binding="{{.Mapper.Model.Name}}">
-
-    <update id="Insert">
-        INSERT INTO {{.Mapper.Model.Table.Name}}({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}{{$e.Column.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}{{$e.Column.Name}}{{end}}) VALUES ({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}?, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}?{{end}})
-    </update>
-
-    <update id="InsertAll">
-        INSERT INTO {{.Mapper.Model.Table.Name}}({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}{{$e.Column.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}{{$e.Column.Name}}{{end}}) VALUES {{ "{{ range $i,$e := . }}{{ if gt $i 0 }}, {{ end }}" }}({{if not .Mapper.Model.IntId}}{{range $i,$e := .Mapper.Model.Ids}}?, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}?{{end}}){{ "{{end}}" }}
-    </update>
-
-    <update id="DeleteByID">
-        DELETE FROM {{.Mapper.Model.Table.Name}} WHERE {{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}} AND {{end}}{{$e.Column.Name}} = ?{{end}}
-    </update>
-    {{if eq .Mapper.Model.IdCount 1}}
-    <update id="DeleteByIDs">
-		DELETE FROM {{.Mapper.Model.Table.Name}} WHERE {{ (index .Mapper.Model.Ids 0).Name }} IN ({{ "{{ range $i,$e := . }}{{if gt $i 0}}, {{end}}?{{end}}" }})
-	</update>
-	{{end}}
-    <update id="DeleteByField">
-		DELETE FROM {{.Mapper.Model.Table.Name}} WHERE {{ "{{.}}" }} = ?
-	</update>
-	
-	<update id="UpdateByID">
-        UPDATE {{.Mapper.Model.Table.Name}} AS t SET {{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}t.{{$e.Column.Name}} = ?{{end}} WHERE {{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}} AND {{end}}t.{{$e.Column.Name}} = ?{{end}}
-    </update>
-
-    <select id="SelectByID">
-        SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE {{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}} AND {{end}}t.{{$e.Column.Name}} = ?{{end}}
-    </select>
-
-    <select id="SelectByModel">
-        SELECT t.* FROM {{.Mapper.Model.Table.Name}} AS t WHERE 1 = 1 {{ "{{.WHERE_SQL}}" }} {{ "{{.SORT_SQL}}" }}
-    </select>
-
-</batis-mapper>`
