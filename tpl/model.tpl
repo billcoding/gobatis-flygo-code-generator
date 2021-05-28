@@ -15,10 +15,10 @@ import (
 type {{.Model.Name}} struct {
     {{range $i, $e := .Model.Ids}}
     {{if $e.Comment}}// {{$e.Name}} {{$e.Column.Comment}}{{end}}
-    {{$e.Name}} {{$e.Type}} `db:"{{$e.Column.Name}}"{{if $e.JSONTag}} json:"{{$e.JSONTagName}},omitempty"{{end}} generator:"DB_PRI"`
+    {{$e.Name}} {{$e.Type}} `db:"{{$e.Column.Name}}"{{if $e.JSONTag}} json:"{{$e.JSONTagName}}"{{end}} generator:"DB_PRI"`
     {{end}}{{range $i, $e := .Model.Fields}}
     {{if $e.Comment}}// {{$e.Name}} {{$e.Column.Comment}}{{end}}
-    {{$e.Name}} {{$e.Type}} `db:"{{$e.Column.Name}}"{{if $e.JSONTag}} json:"{{$e.JSONTagName}},omitempty"{{end}}`
+    {{$e.Name}} {{$e.Type}} `db:"{{$e.Column.Name}}"{{if $e.JSONTag}} json:"{{$e.JSONTagName}}"{{end}}`
     {{end}}
 }
 

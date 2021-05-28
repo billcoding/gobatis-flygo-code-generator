@@ -77,7 +77,9 @@ func (eg *ModelGenerator) Init() *ModelGenerator {
 				}
 			}
 		}
-		autoIncrement = column.AutoIncrement == 1
+		if !autoIncrement {
+			autoIncrement = column.AutoIncrement == 1
+		}
 		if eg.C.Model.FieldIdUpper {
 			switch {
 			case strings.LastIndex(field.Name, "Id") != -1:
