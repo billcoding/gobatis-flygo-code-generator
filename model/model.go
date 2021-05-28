@@ -14,4 +14,5 @@ type Model struct {
 	ImportTime      bool
 	IntId           bool
 	IdCount         int
+	AutoIncrement   bool
 }

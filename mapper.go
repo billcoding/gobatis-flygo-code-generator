@@ -26,7 +26,8 @@ var tableXML = `<?xml version="1.0" encoding="UTF-8"?>
 			  LOCATE('(', t.COLUMN_TYPE) - 1
 			)
 		  ) AS COLUMN_TYPE,
-		  IFNULL(t.COLUMN_COMMENT, '') AS COLUMN_COMMENT 
+		  IFNULL(t.COLUMN_COMMENT, '') AS COLUMN_COMMENT,
+		  t.EXTRA = 'auto_increment' as AUTO_INCREMENT
 		FROM
 		  information_schema.COLUMNS AS t 
 		WHERE t.TABLE_SCHEMA = '{{.}}' 

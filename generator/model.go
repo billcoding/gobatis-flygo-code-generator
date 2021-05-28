@@ -40,6 +40,7 @@ func (eg *ModelGenerator) Init() *ModelGenerator {
 	}
 	eg.Model.Name = ConvertString(eg.Table.Name, eg.C.Model.TableToModelStrategy)
 	eg.Model.FileName = ConvertString(eg.Table.Name, eg.C.Model.FileNameStrategy)
+	autoIncrement := false
 	for _, column := range eg.Table.Columns {
 		field := &Field{
 			Name:    ConvertString(column.Name, eg.C.Model.ColumnToFieldStrategy),
@@ -76,6 +77,7 @@ func (eg *ModelGenerator) Init() *ModelGenerator {
 				}
 			}
 		}
+		autoIncrement = column.AutoIncrement == 1
 		if eg.C.Model.FieldIdUpper {
 			switch {
 			case strings.LastIndex(field.Name, "Id") != -1:
@@ -104,6 +106,7 @@ func (eg *ModelGenerator) Init() *ModelGenerator {
 	}
 	eg.Model.IntId = strings.HasPrefix(eg.Model.Ids[0].Type, "int")
 	eg.Model.IdCount = len(eg.Model.Ids)
+	eg.Model.AutoIncrement = autoIncrement
 	return eg
 }
 
