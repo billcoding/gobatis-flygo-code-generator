@@ -31,17 +31,17 @@ type {{.Mapper.Name}} struct {
 }
 {{if .Mapper.Model.IntId}}{{if lt .Mapper.Model.IdCount 2}}
 // Insert inserts one record
-func (m *{{.Mapper.Name}}) Insert(model *{{.Mapper.Model.Name}}) (bool, int64) {
+func (m *{{.Mapper.Name}}) Insert(model *{{.Mapper.Model.Name}}) (error, int64) {
     return m.InsertWithTX(nil, model)
 }
 
 // Inserts inserts some record
-func (m *{{.Mapper.Name}}) Inserts(models []*{{.Mapper.Model.Name}}) (bool, []int64) {
+func (m *{{.Mapper.Name}}) Inserts(models []*{{.Mapper.Model.Name}}) (error, []int64) {
     return m.InsertsWithTX(nil, models)
 }
 
 // InsertWithTX inserts one record with a tx
-func (m *{{.Mapper.Name}}) InsertWithTX(TX *TX, model *{{.Mapper.Model.Name}}) (bool, int64) {
+func (m *{{.Mapper.Name}}) InsertWithTX(TX *TX, model *{{.Mapper.Model.Name}}) (error, int64) {
     m.insertMapper.Args({{if not .Mapper.Model.AutoIncrement}}{{range $i,$e := .Mapper.Model.Ids}}model.{{$e.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}model.{{$e.Name}}{{end}})
     var err error
 	if TX != nil {
@@ -49,36 +49,33 @@ func (m *{{.Mapper.Name}}) InsertWithTX(TX *TX, model *{{.Mapper.Model.Name}}) (
 	} else {
 	    err = m.insertMapper.Exec()
 	}
-	if err == nil {
-		return true, m.insertMapper.InsertedId()
-	}
-	return false, 0
+	return err, m.insertMapper.InsertedId()
 }
 
 // InsertsWithTX inserts some record with a tx
-func (m *{{.Mapper.Name}}) InsertsWithTX(TX *TX, models []*{{.Mapper.Model.Name}}) (bool, []int64) {
+func (m *{{.Mapper.Name}}) InsertsWithTX(TX *TX, models []*{{.Mapper.Model.Name}}) (error, []int64) {
 	insertedIDs := make([]int64, 0)
-	insertedCount := 0
 	for i := range models {
-		if success, insertedID := m.InsertWithTX(TX, models[i]); success {
-			insertedCount++
+		if err, insertedID := m.InsertWithTX(TX, models[i]); err != nil {
+			return err, insertedIDs
+		}else {
 			insertedIDs = append(insertedIDs, insertedID)
 		}
 	}
-	return insertedCount == len(models), insertedIDs
+	return nil, insertedIDs
 }{{end}}{{else}}
 // Insert inserts one record
-func (m *{{.Mapper.Name}}) Insert(model *{{.Mapper.Model.Name}}) bool {
+func (m *{{.Mapper.Name}}) Insert(model *{{.Mapper.Model.Name}}) error {
     return m.InsertWithTX(nil, model)
 }
 
 // Inserts inserts some record
-func (m *{{.Mapper.Name}}) Inserts(models []*{{.Mapper.Model.Name}}) bool {
+func (m *{{.Mapper.Name}}) Inserts(models []*{{.Mapper.Model.Name}}) error {
     return m.InsertsWithTX(nil, models)
 }
 
 // InsertWithTX inserts one record with a tx
-func (m *{{.Mapper.Name}}) InsertWithTX(TX *TX, model *{{.Mapper.Model.Name}}) bool {
+func (m *{{.Mapper.Name}}) InsertWithTX(TX *TX, model *{{.Mapper.Model.Name}}) error {
     insertMapper := m.insertMapper
     insertMapper.Args({{if not .Mapper.Model.AutoIncrement}}{{range $i,$e := .Mapper.Model.Ids}}model.{{$e.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}model.{{$e.Name}}{{end}})
     var err error
@@ -87,27 +84,26 @@ func (m *{{.Mapper.Name}}) InsertWithTX(TX *TX, model *{{.Mapper.Model.Name}}) b
 	} else {
 	    err = insertMapper.Exec()
 	}
-	return err == nil
+	return err
 }
 
 // InsertsWithTX inserts some record with a tx
-func (m *{{.Mapper.Name}}) InsertsWithTX(TX *TX, models []*{{.Mapper.Model.Name}}) bool {
-	insertedCount := 0
+func (m *{{.Mapper.Name}}) InsertsWithTX(TX *TX, models []*{{.Mapper.Model.Name}}) error {
 	for i := range models {
-		if m.InsertWithTX(TX, models[i]) {
-			insertedCount++
+		if err := m.InsertWithTX(TX, models[i]); err != nil {
+			return err
 		}
 	}
-	return insertedCount == len(models)
+	return nil
 }{{end}}
 
 // InsertAll inserts some record
-func (m *{{.Mapper.Name}}) InsertAll(models []*{{.Mapper.Model.Name}}) bool {
+func (m *{{.Mapper.Name}}) InsertAll(models []*{{.Mapper.Model.Name}}) error {
     return m.InsertAllWithTX(nil, models)
 }
 
 // InsertAllWithTX inserts some record with a tx
-func (m *{{.Mapper.Name}}) InsertAllWithTX(TX *TX, models []*{{.Mapper.Model.Name}}) bool {
+func (m *{{.Mapper.Name}}) InsertAllWithTX(TX *TX, models []*{{.Mapper.Model.Name}}) error {
 	args := make([]interface{}, 0)
 	for _, model := range models {
 		args = append(args{{if not .Mapper.Model.AutoIncrement}}{{range $i,$e := .Mapper.Model.Ids}}, model.{{$e.Name}}{{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}, model.{{$e.Name}}{{end}})
@@ -119,32 +115,32 @@ func (m *{{.Mapper.Name}}) InsertAllWithTX(TX *TX, models []*{{.Mapper.Model.Nam
 	} else {
 	    err = m.insertAllMapper.Exec()
 	}
-	return err == nil
+	return err
 }
 
 // DeleteByID deletes one record by ID
-func (m *{{.Mapper.Name}}) DeleteByID({{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}},{{end}}{{$e.Name}} {{$e.Type}}{{end}}) bool {
+func (m *{{.Mapper.Name}}) DeleteByID({{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}},{{end}}{{$e.Name}} {{$e.Type}}{{end}}) error {
     return m.DeleteByIDWithTX(nil, {{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}}, {{end}}{{$e.Name}}{{end}})
 }
 
 // DeleteByIDWithTX deletes one record by ID with a tx
-func (m *{{.Mapper.Name}}) DeleteByIDWithTX(TX *TX, {{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}}, {{end}}{{$e.Name}} {{$e.Type}}{{end}}) bool {
+func (m *{{.Mapper.Name}}) DeleteByIDWithTX(TX *TX, {{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}}, {{end}}{{$e.Name}} {{$e.Type}}{{end}}) error {
     deleteByIDMapper := m.deleteByIDMapper.Args({{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}}, {{end}}{{$e.Name}}{{end}})
     if TX != nil{
         TX.Update(deleteByIDMapper)
-        return true
+        return nil
     }
-    return deleteByIDMapper.Exec() == nil
+    return deleteByIDMapper.Exec()
 }{{if eq .Mapper.Model.IdCount 1}}{{$id := (index .Mapper.Model.Ids 0)}}{{$idName := $id.Name}}{{$idType := $id.Type}}
 // DeleteByIDs deletes some record by IDs
-func (m *{{.Mapper.Name}}) DeleteByIDs({{ $idName }}s []{{ $idType }}) bool {
+func (m *{{.Mapper.Name}}) DeleteByIDs({{ $idName }}s []{{ $idType }}) error {
 	return m.DeleteByIDsWithTX(nil, {{ $idName }}s)
 }
 
 // DeleteByIDsWithTX deletes some record by IDs with a tx
-func (m *{{.Mapper.Name}}) DeleteByIDsWithTX(TX *TX, IDs []{{ $idType }}) bool {
+func (m *{{.Mapper.Name}}) DeleteByIDsWithTX(TX *TX, IDs []{{ $idType }}) error {
 	if IDs == nil || len(IDs) <= 0 {
-		return false
+		return nil
 	}
 	args := make([]interface{}, 0)
 	for i := range IDs {
@@ -153,86 +149,86 @@ func (m *{{.Mapper.Name}}) DeleteByIDsWithTX(TX *TX, IDs []{{ $idType }}) bool {
 	deleteByIDsMapper := m.deleteByIDsMapper.Prepare(IDs).Args(args...)
 	if TX != nil{
 		TX.Update(deleteByIDsMapper)
-		return true
+		return nil
 	}
-	return deleteByIDsMapper.Exec() == nil
+	return deleteByIDsMapper.Exec()
 }{{end}}{{$mapperName := .Mapper.Name}}{{if gt .Mapper.Model.IdCount 1}}{{range $i,$e := .Mapper.Model.Ids}}
 
 // DeleteBy{{$e.Name}} deletes a record by {{$e.Name}}
-func (m *{{$mapperName}}) DeleteBy{{$e.Name}}({{$e.Name}} {{$e.Type}}) bool {
+func (m *{{$mapperName}}) DeleteBy{{$e.Name}}({{$e.Name}} {{$e.Type}}) error {
 	return m.DeleteBy{{$e.Name}}WithTX(nil, {{$e.Name}})
 }
 
 // DeleteBy{{$e.Name}}WithTX deletes a record by {{$e.Name}} with a tx
-func (m *{{$mapperName}}) DeleteBy{{$e.Name}}WithTX(TX *TX, {{$e.Name}} {{$e.Type}}) bool {
+func (m *{{$mapperName}}) DeleteBy{{$e.Name}}WithTX(TX *TX, {{$e.Name}} {{$e.Type}}) error {
 	m.deleteByFieldMapper.Prepare("{{$e.Column.Name}}").Args({{$e.Name}})
 	if TX != nil{
 		TX.Update(m.deleteByFieldMapper)
-		return true
+		return nil
 	}
-	return m.deleteByFieldMapper.Exec() == nil
+	return m.deleteByFieldMapper.Exec()
 }{{end}}{{end}}
 
 // DeleteByField deletes a record by column
-func (m *{{.Mapper.Name}}) DeleteByField(column p.Column, field interface{}) bool {
+func (m *{{.Mapper.Name}}) DeleteByField(column p.Column, field interface{}) error {
 	return m.DeleteByFieldWithTX(nil, column, field)
 }
 
 // DeleteByFieldWithTX deletes a record by column with a tx
-func (m *{{.Mapper.Name}}) DeleteByFieldWithTX(TX *TX, column p.Column, field interface{}) bool {
+func (m *{{.Mapper.Name}}) DeleteByFieldWithTX(TX *TX, column p.Column, field interface{}) error {
 	m.deleteByFieldMapper.Prepare(column).Args(field)
 	if TX != nil{
 		TX.Update(m.deleteByFieldMapper)
-		return true
+		return nil
 	}
-	return m.deleteByFieldMapper.Exec() == nil
+	return m.deleteByFieldMapper.Exec()
 }
 
 // DeleteByModel deletes some record by model
-func (m *{{.Mapper.Name}}) DeleteByModel(model *{{.Mapper.Model.Name}}) bool {
+func (m *{{.Mapper.Name}}) DeleteByModel(model *{{.Mapper.Model.Name}}) error {
 	return m.DeleteByModelWithTX(nil, model)
 }
 
 // DeleteByModelWithTX deletes some record by model with a tx
-func (m *{{.Mapper.Name}}) DeleteByModelWithTX(TX *TX, model *{{.Mapper.Model.Name}}) bool {
+func (m *{{.Mapper.Name}}) DeleteByModelWithTX(TX *TX, model *{{.Mapper.Model.Name}}) error {
 	whereSQL, params := m.generateWhereSQL(model, false)
 	m.deleteByCondMapper.Prepare(whereSQL).Args(params...)
 	if TX != nil{
 		TX.Update(m.deleteByCondMapper)
-		return true
+		return nil
 	}
-	return m.deleteByCondMapper.Exec() == nil
+	return m.deleteByCondMapper.Exec()
 }
 
 // DeleteByCond deletes some record by cs
-func (m *{{.Mapper.Name}}) DeleteByCond(cs ...p.Cond) bool {
+func (m *{{.Mapper.Name}}) DeleteByCond(cs ...p.Cond) error {
 	return m.DeleteByCondWithTX(nil, cs...)
 }
 
 // DeleteByCondWithTX deletes some record by cs with a tx
-func (m *{{.Mapper.Name}}) DeleteByCondWithTX(TX *TX, cs ...p.Cond) bool {
+func (m *{{.Mapper.Name}}) DeleteByCondWithTX(TX *TX, cs ...p.Cond) error {
 	condSQL, params := m.generateCondSQL(cs...)
 	m.deleteByCondMapper.Prepare(condSQL).Args(params...)
 	if TX != nil{
 		TX.Update(m.deleteByCondMapper)
-		return true
+		return nil
 	}
-	return m.deleteByCondMapper.Exec() == nil
+	return m.deleteByCondMapper.Exec()
 }
 
 // UpdateByID updates one record by ID
-func (m *{{.Mapper.Name}}) UpdateByID(model *{{.Mapper.Model.Name}}) bool {
+func (m *{{.Mapper.Name}}) UpdateByID(model *{{.Mapper.Model.Name}}) error {
     return m.UpdateByIDWithTX(nil, model)
 }
 
 // UpdateByIDWithTX updates one record by ID with a tx
-func (m *{{.Mapper.Name}}) UpdateByIDWithTX(TX *TX, model *{{.Mapper.Model.Name}}) bool {
+func (m *{{.Mapper.Name}}) UpdateByIDWithTX(TX *TX, model *{{.Mapper.Model.Name}}) error {
     updateByIDMapper := m.updateByIDMapper.Args({{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}model.{{$e.Name}}{{end}}{{range $i,$e := .Mapper.Model.Ids}}, model.{{$e.Name}}{{end}})
     if TX != nil{
         TX.Update(updateByIDMapper)
-        return true
+        return nil
     }
-    return updateByIDMapper.Exec() == nil
+    return updateByIDMapper.Exec()
 }
 
 // SelectByID selects one record by ID
