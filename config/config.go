@@ -31,7 +31,7 @@ type ModelConfiguration struct {
 	ColumnToFieldStrategy StrategyType
 	FileNameStrategy      StrategyType
 	JSONTag               bool
-	JSONTagStrategy       StrategyType
+	JSONTagKeyStrategy    StrategyType
 	FieldIdUpper          bool
 	Comment               bool
 	FieldComment          bool

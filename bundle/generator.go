@@ -1,11 +1,12 @@
-package main
+package bundle
 
 import (
-	. "github.com/billcoding/gobatis-flygo-code-generator/generator"
-	. "github.com/billcoding/gobatis-flygo-code-generator/model"
+	. "github.com/billcoding/golang-code-generator/config"
+	. "github.com/billcoding/golang-code-generator/generator"
+	. "github.com/billcoding/golang-code-generator/model"
 )
 
-func getModelGenerators(tableMap map[string]*Table) []Generator {
+func GetModelGenerators(CFG *Configuration, tableMap map[string]*Table) []Generator {
 	egs := make([]Generator, 0)
 	for _, v := range tableMap {
 		eg := &ModelGenerator{
@@ -18,7 +19,7 @@ func getModelGenerators(tableMap map[string]*Table) []Generator {
 	return egs
 }
 
-func getMapperGenerators(modelGenerators []Generator) []Generator {
+func GetMapperGenerators(CFG *Configuration, modelGenerators []Generator) []Generator {
 	egs := make([]Generator, 0)
 	for _, eg := range modelGenerators {
 		mg := &MapperGenerator{
@@ -30,13 +31,13 @@ func getMapperGenerators(modelGenerators []Generator) []Generator {
 	return egs
 }
 
-func getCfgGenerator() Generator {
+func GetCfgGenerator(CFG *Configuration) Generator {
 	return &ConfigGenerator{
 		C: CFG,
 	}
 }
 
-func getControllerGenerators(modelGenerators []Generator) []Generator {
+func GetControllerGenerators(CFG *Configuration, modelGenerators []Generator) []Generator {
 	cgs := make([]Generator, 0)
 	for _, eg := range modelGenerators {
 		cg := &ControllerGenerator{
@@ -48,7 +49,7 @@ func getControllerGenerators(modelGenerators []Generator) []Generator {
 	return cgs
 }
 
-func getServiceGenerators(modelGenerators []Generator) []Generator {
+func GetServiceGenerators(CFG *Configuration, modelGenerators []Generator) []Generator {
 	sgs := make([]Generator, 0)
 	for _, eg := range modelGenerators {
 		sg := &ServiceGenerator{

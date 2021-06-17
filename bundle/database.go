@@ -1,13 +1,13 @@
-package main
+package bundle
 
 import (
 	"fmt"
-	. "github.com/billcoding/gobatis-flygo-code-generator/config"
-	. "github.com/billcoding/gobatis-flygo-code-generator/model"
+	. "github.com/billcoding/golang-code-generator/config"
+	. "github.com/billcoding/golang-code-generator/model"
 	"strings"
 )
 
-func tables(database string, c *Configuration) []*Table {
+func Tables(database string, c *Configuration) []*Table {
 	whereSql := ""
 	if c.IncludeTables != nil && len(c.IncludeTables) > 0 {
 		whereSql = fmt.Sprintf("AND t.`TABLE_NAME` IN('%s')", strings.Join(c.IncludeTables, "','"))
@@ -27,7 +27,7 @@ func tables(database string, c *Configuration) []*Table {
 	return ts
 }
 
-func columns(database string) []*Column {
+func Columns(database string) []*Column {
 	columnList := SelectTableColumnListSelectMapper.Prepare(database).Exec().List(new(Column))
 	cs := make([]*Column, len(columnList))
 	for i, c := range columnList {
@@ -36,7 +36,7 @@ func columns(database string) []*Column {
 	return cs
 }
 
-func transformTables(tables []*Table) map[string]*Table {
+func TransformTables(tables []*Table) map[string]*Table {
 	tableMap := make(map[string]*Table, len(tables))
 	for _, t := range tables {
 		tableMap[t.Name] = t
@@ -44,7 +44,7 @@ func transformTables(tables []*Table) map[string]*Table {
 	return tableMap
 }
 
-func transformColumns(columns []*Column) map[string]*[]*Column {
+func TransformColumns(columns []*Column) map[string]*[]*Column {
 	columnMap := make(map[string]*[]*Column, 0)
 	for _, c := range columns {
 		cs, have := columnMap[c.Table]
@@ -59,7 +59,7 @@ func transformColumns(columns []*Column) map[string]*[]*Column {
 	return columnMap
 }
 
-func setTableColumns(tableMap map[string]*Table, columnMap map[string]*[]*Column) {
+func SetTableColumns(tableMap map[string]*Table, columnMap map[string]*[]*Column) {
 	for k, v := range tableMap {
 		v.Columns = append(v.Columns, *columnMap[k]...)
 	}

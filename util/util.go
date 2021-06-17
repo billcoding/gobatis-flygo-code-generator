@@ -1,7 +1,7 @@
 package generator
 
 import (
-	. "github.com/billcoding/gobatis-flygo-code-generator/config"
+	. "github.com/billcoding/golang-code-generator/config"
 	"strings"
 	"text/template"
 )

@@ -2,9 +2,9 @@ package generator
 
 import (
 	"fmt"
-	. "github.com/billcoding/gobatis-flygo-code-generator/config"
-	. "github.com/billcoding/gobatis-flygo-code-generator/tpl"
-	. "github.com/billcoding/gobatis-flygo-code-generator/util"
+	. "github.com/billcoding/golang-code-generator/config"
+	. "github.com/billcoding/golang-code-generator/tpl"
+	. "github.com/billcoding/golang-code-generator/util"
 	"log"
 	"os"
 	"path/filepath"

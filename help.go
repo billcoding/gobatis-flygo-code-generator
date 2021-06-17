@@ -7,15 +7,15 @@ import (
 )
 
 func printUsage() {
-	fmt.Printf(`Usage of gobatis-flygo-code-generator:
+	fmt.Printf(`Usage of golang-code-generator:
 
-gobatis-flygo-code-generator -mod MODULE -dsn DSN -db DATABASE -OPTIONS
+golang-code-generator -mod MODULE -dsn DSN -db DATABASE -OPTIONS
 
 Examples:
 
-gobatis-flygo-code-generator -mod "awesomeProject" -dsn "root:123@tcp(127.0.0.1:3306)/test" -db "Database"
-gobatis-flygo-code-generator -mod "awesomeProject" -dsn "root:123@tcp(127.0.0.1:3306)/test" -db "Database" -o "/to/path" 
-gobatis-flygo-code-generator -mod "awesomeProject" -dsn "root:123@tcp(127.0.0.1:3306)/test" -db "Database" -au "bigboss" -o "/to/path" 
+golang-code-generator -mod "awesomeProject" -dsn "root:123@tcp(127.0.0.1:3306)/test" -db "Database"
+golang-code-generator -mod "awesomeProject" -dsn "root:123@tcp(127.0.0.1:3306)/test" -db "Database" -o "/to/path" 
+golang-code-generator -mod "awesomeProject" -dsn "root:123@tcp(127.0.0.1:3306)/test" -db "Database" -au "bigboss" -o "/to/path" 
 
 Supports options:
 `)
@@ -24,7 +24,7 @@ Supports options:
 
 func printVersion() {
 	fmt.Printf(`
-github.com/billcoding/gobatis-flygo-code-generator
+github.com/billcoding/golang-code-generator
 %s
 `, runtime.Version())
 }

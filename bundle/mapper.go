@@ -1,4 +1,4 @@
-package main
+package bundle
 
 var tableXML = `<?xml version="1.0" encoding="UTF-8"?>
 <batis-mapper binding="table">

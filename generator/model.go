@@ -2,10 +2,10 @@ package generator
 
 import (
 	"fmt"
-	. "github.com/billcoding/gobatis-flygo-code-generator/config"
-	. "github.com/billcoding/gobatis-flygo-code-generator/model"
-	"github.com/billcoding/gobatis-flygo-code-generator/tpl"
-	. "github.com/billcoding/gobatis-flygo-code-generator/util"
+	. "github.com/billcoding/golang-code-generator/config"
+	. "github.com/billcoding/golang-code-generator/model"
+	"github.com/billcoding/golang-code-generator/tpl"
+	. "github.com/billcoding/golang-code-generator/util"
 	"log"
 	"os"
 	"path/filepath"
@@ -90,7 +90,7 @@ func (eg *ModelGenerator) Init() *ModelGenerator {
 		}
 		if eg.C.Model.JSONTag {
 			field.JSONTag = true
-			field.JSONTagName = ConvertString(column.Name, eg.C.Model.JSONTagStrategy)
+			field.JSONTagName = ConvertString(column.Name, eg.C.Model.JSONTagKeyStrategy)
 		}
 	}
 
