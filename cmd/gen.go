@@ -171,15 +171,15 @@ func init() {
 
 	genCmd.PersistentFlags().BoolVarP(&service, "service", "s", false, "Generate Service file")
 	genCmd.PersistentFlags().StringVarP(&servicePKG, "service-pkg", "5", "service", "The Service package")
-	genCmd.PersistentFlags().BoolVar(&serviceNameDefault, "service-name-default", true, "The Service name strategy: default")
+	genCmd.PersistentFlags().BoolVar(&serviceNameDefault, "service-name-default", false, "The Service name strategy: default")
 	genCmd.PersistentFlags().BoolVar(&serviceNameFirstLetterUpper, "service-name-first-letter-upper", false, "The Service name strategy: FirstLetterUpper")
-	genCmd.PersistentFlags().BoolVar(&serviceNameUnderlineToCamel, "service-name-underline-to-camel", false, "The Service name strategy: UnderlineToCamel")
+	genCmd.PersistentFlags().BoolVar(&serviceNameUnderlineToCamel, "service-name-underline-to-camel", true, "The Service name strategy: UnderlineToCamel")
 	genCmd.PersistentFlags().BoolVar(&serviceNameUnderlineToUpper, "service-name-underline-to-upper", false, "The Service name strategy: UnderlineToUpper")
 
 	genCmd.PersistentFlags().BoolVar(&serviceVarDefault, "service-var-default", true, "The Service var strategy: default")
 	genCmd.PersistentFlags().BoolVar(&serviceVarFirstLetterUpper, "service-var-first-letter-upper", false, "The Service var strategy: FirstLetterUpper")
 	genCmd.PersistentFlags().BoolVar(&serviceVarUnderlineToCamel, "service-var-underline-to-camel", false, "The Service var strategy: UnderlineToCamel")
-	genCmd.PersistentFlags().BoolVar(&serviceVarUnderlineToUpper, "service-var-underline-to-upper", false, "The Service var strategy: UnderlineToUpper")
+	genCmd.PersistentFlags().BoolVar(&serviceVarUnderlineToUpper, "service-var-underline-to-upper", true, "The Service var strategy: UnderlineToUpper")
 
 	genCmd.PersistentFlags().BoolVar(&serviceFileNameDefault, "service-filename-default", true, "The Service FileName strategy: default")
 	genCmd.PersistentFlags().BoolVar(&serviceFileNameFirstLetterUpper, "service-filename-first-letter-upper", false, "The Service FileName strategy: FirstLetterUpper")
