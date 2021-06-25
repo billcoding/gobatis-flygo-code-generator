@@ -22,7 +22,7 @@
 	</update>
 
     <update id="DeleteByCond">
-		DELETE t.* FROM {{.Mapper.Model.Table.Name}} as t WHERE {{ "{{.}}" }}
+		DELETE t.* FROM {{.Mapper.Model.Table.Name}} as t WHERE 1 = 1 {{ "{{.}}" }}
 	</update>
 
 	<update id="UpdateByID">
