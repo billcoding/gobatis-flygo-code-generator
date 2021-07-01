@@ -18,16 +18,17 @@ var {{.Mapper.VarName}} = &{{.Mapper.Name}}{}
 
 {{if .Config.Model.Comment}}// {{.Mapper.Name}} {{.Mapper.Model.Table.Comment}} Mapper{{end}}
 type {{.Mapper.Name}} struct {
-	insertMapper             *UpdateMapper
-	insertAllMapper          *UpdateMapper
-    deleteByIDMapper         *UpdateMapper{{if eq .Mapper.Model.IdCount 1}}
-    deleteByIDsMapper        *UpdateMapper{{end}}
-    deleteByFieldMapper      *UpdateMapper
-    deleteByCondMapper       *UpdateMapper
-	updateByIDMapper         *UpdateMapper
-	selectByIDMapper         *SelectMapper
-	selectByModelMapper      *SelectMapper
-	selectCountByModelMapper *SelectMapper
+	insertMapper               *UpdateMapper
+	insertAllMapper            *UpdateMapper
+	insertAllPrepareMapper     *UpdateMapper
+    deleteByIDMapper           *UpdateMapper{{if eq .Mapper.Model.IdCount 1}}
+    deleteByIDsMapper          *UpdateMapper{{end}}
+    deleteByFieldMapper        *UpdateMapper
+    deleteByCondMapper         *UpdateMapper
+	updateByIDMapper           *UpdateMapper
+	selectByIDMapper           *SelectMapper
+	selectByModelMapper        *SelectMapper
+	selectCountByModelMapper   *SelectMapper
 }
 {{if .Mapper.Model.IntId}}{{if lt .Mapper.Model.IdCount 2}}
 // Insert inserts one record
@@ -114,6 +115,23 @@ func (m *{{.Mapper.Name}}) InsertAllWithTX(TX *TX, models []*{{.Mapper.Model.Nam
 	   TX.Update(m.insertAllMapper)
 	} else {
 	    err = m.insertAllMapper.Exec()
+	}
+	return err
+}
+
+// InsertAllPrepare inserts some record by prepare
+func (m *{{.Mapper.Name}}) InsertAllPrepare(models []*{{.Mapper.Model.Name}}) error {
+    return m.InsertAllPrepareWithTX(nil, models)
+}
+
+// InsertAllPrepareWithTX inserts some record with a tx by prepare
+func (m *{{.Mapper.Name}}) InsertAllPrepareWithTX(TX *TX, models []*{{.Mapper.Model.Name}}) error {
+	m.insertAllPrepareMapper.Prepare(models)
+    var err error
+	if TX != nil {
+	   TX.Update(m.insertAllPrepareMapper)
+	} else {
+	    err = m.insertAllPrepareMapper.Exec()
 	}
 	return err
 }
@@ -502,6 +520,7 @@ func init() {
     {
     	{{.Mapper.VarName}}.insertMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "Insert").Update()
     	{{.Mapper.VarName}}.insertAllMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "InsertAll").Update()
+    	{{.Mapper.VarName}}.insertAllPrepareMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "InsertAllPrepare").Update()
     	{{.Mapper.VarName}}.deleteByIDMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "DeleteByID").Update(){{if eq .Mapper.Model.IdCount 1}}
     	{{.Mapper.VarName}}.deleteByIDsMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "DeleteByIDs").Update(){{end}}
     	{{.Mapper.VarName}}.deleteByFieldMapper = NewHelperWithBatis(c.{{.Mapper.Batis}}, "{{.Mapper.Model.Name}}", "DeleteByField").Update()

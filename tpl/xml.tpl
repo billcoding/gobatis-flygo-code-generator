@@ -9,6 +9,10 @@
         INSERT INTO {{.Mapper.Model.Table.Name}}({{if not .Mapper.Model.AutoIncrement }}{{range $i,$e := .Mapper.Model.Ids}}{{$e.Column.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}{{$e.Column.Name}}{{end}}) VALUES {{ "{{range $i,$e := .}}{{if gt $i 0}}, {{end}}"}}({{if not .Mapper.Model.AutoIncrement}}{{range $i,$e := .Mapper.Model.Ids}}?, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}?{{end}}){{"{{end}}"}}
     </update>
 
+    <update id="InsertAllPrepare">
+        INSERT INTO {{.Mapper.Model.Table.Name}}({{if not .Mapper.Model.AutoIncrement }}{{range $i,$e := .Mapper.Model.Ids}}{{$e.Column.Name}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}{{$e.Column.Name}}{{end}}) VALUES {{ "{{range $i,$e := .}}{{if gt $i 0}}, {{end}}"}}({{if not .Mapper.Model.AutoIncrement}}{{range $i,$e := .Mapper.Model.Ids}}{{"'{{$e."}}{{$e.Name}}{{"}}'"}}, {{end}}{{end}}{{range $i,$e := .Mapper.Model.Fields}}{{if gt $i 0}}, {{end}}{{"'{{$e."}}{{$e.Name}}{{"}}'"}}{{end}}){{"{{end}}"}}
+    </update>
+
     <update id="DeleteByID">
         DELETE FROM {{.Mapper.Model.Table.Name}} WHERE {{range $i,$e := .Mapper.Model.Ids}}{{if gt $i 0}} AND {{end}}{{$e.Column.Name}} = ?{{end}}
     </update>
