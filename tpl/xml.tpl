@@ -18,7 +18,7 @@
     </update>
     {{if eq .Mapper.Model.IdCount 1}}
     <update id="DeleteByIDs">
-		DELETE FROM {{.Mapper.Model.Table.Name}} WHERE {{ (index .Mapper.Model.Ids 0).Name }} IN ({{ "{{ range $i,$e := . }}{{if gt $i 0}}, {{end}}?{{end}}" }})
+		DELETE FROM {{.Mapper.Model.Table.Name}} WHERE {{ (index .Mapper.Model.Ids 0).Column.Name }} IN ({{ "{{ range $i,$e := . }}{{if gt $i 0}}, {{end}}?{{end}}" }})
 	</update>
 	{{end}}
     <update id="DeleteByField">
